@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>My Daily Motivation & Meals — COACH REGINA </title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="container">
+    <header>
+      <h1> COACH REGINA <br> Daily Motivation & Meals</h1>
+      <p class="subtitle">Motivation, biblical hope, and a rotating 6-month menu — one day at a time.</p>
+    </header>
+
+    <section class="controls">
+      <label>
+        Start date:
+        <input type="date" id="startDateInput" />
+      </label>
+      <div class="nav-buttons">
+        <button id="prevDay">◀ Prev</button>
+        <span id="dayLabel">Day 1</span>
+        <button id="nextDay">Next ▶</button>
+      </div>
+      <button id="generateBtn">Generate 6-Month Plan</button>
+      <button id="clearBtn">Clear Plan</button>
+    </section>
+
+    <section class="card" id="todayCard">
+      <div class="top-row">
+        <div class="date-info">
+          <div id="fullDate">—</div>
+          <div id="dayNumber">Day 1 / 180</div>
+        </div>
+        <div class="actions">
+          <button id="markDone">Mark complete</button>
+          <button id="printBtn">Print</button>
+        </div>
+      </div>
+
+      <hr />
+
+      <div class="verse">
+        <h2>Biblical encouragement</h2>
+        <blockquote id="verseText">Loading…</blockquote>
+        <cite id="verseRef"></cite>
+      </div>
+
+      <div class="quote">
+        <h3>Motivation</h3>
+        <p id="motivationText">Loading…</p>
+        <!-- Daily Food Benefit -->
+<div class="benefit">
+  <h3>Daily Food Benefit</h3>
+  <p id="benefitText">Loading…</p>
+</div>
+
+<!-- Kidney-Friendly Fruits -->
+<div class="fruits">
+  <h3>Kidney-Friendly Fruit Options</h3>
+  <ul id="fruitList"></ul>
+</div>
+
+      </div>
+
+      <div class="meals">
+        <h3>Today's Menu</h3>
+        <ul id="menuList">
+          <li><strong>Breakfast:</strong> <span id="breakfast"></span></li>
+          <li><strong>Snack:</strong> <span id="snack"></span></li>
+          <li><strong>Lunch:</strong> <span id="lunch"></span></li>
+          <li><strong>Dinner:</strong> <span id="dinner"></span></li>
+        </ul>
+      </div>
+    </section>
+
+    <footer>
+      <p>Note: Everything Happen for a reason! Always Have a positive thinking in all situation !!! <br>GOD HAS NEVER DISAPPOINT AND HE WILL NEVER DISAPPOINT YOU </p>
+    </footer>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

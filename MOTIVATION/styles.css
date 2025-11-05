@@ -1,0 +1,225 @@
+/* === General reset === */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Segoe UI", Roboto, sans-serif;
+  line-height: 1.6;
+  background: #faf9f8;
+  color: #333;
+  padding: 1rem;
+}
+
+/* === Layout === */
+.container {
+  max-width: 700px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  padding: 1.5rem;
+}
+
+/* === Header === */
+header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+header h1 {
+  font-size: 1.8rem;
+  color: #234a77;
+  margin-bottom: 0.25rem;
+}
+
+.subtitle {
+  color: #666;
+  font-size: 0.95rem;
+}
+
+/* === Controls === */
+.controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.controls label {
+  font-weight: 600;
+}
+
+.controls input[type="date"] {
+  padding: 0.3rem;
+  font-size: 0.95rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.nav-buttons {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.nav-buttons button {
+  background: #e7f0ff;
+  border: 1px solid #c7d9ff;
+  color: #234a77;
+  border-radius: 5px;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.nav-buttons button:hover {
+  background: #d5e4ff;
+}
+
+.controls button {
+  background: #2d6cdf;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s ease;
+}
+
+.controls button:hover {
+  background: #1e54b7;
+}
+
+/* === Card === */
+.card {
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #eee;
+  padding: 1rem;
+}
+
+.top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.date-info {
+  font-weight: 600;
+  color: #234a77;
+}
+
+.actions button {
+  background: #f3f6ff;
+  color: #234a77;
+  border: 1px solid #cfd8ef;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.actions button:hover {
+  background: #e1ebff;
+}
+
+hr {
+  margin: 1rem 0;
+  border: none;
+  height: 1px;
+  background: #eee;
+}
+
+/* === Verse & Quote === */
+.verse h2,
+.quote h3,
+.meals h3 {
+  color: #234a77;
+  margin-bottom: 0.5rem;
+}
+
+blockquote {
+  background: #f5f8ff;
+  border-left: 4px solid #5c85d6;
+  padding: 0.8rem;
+  font-style: italic;
+  margin-bottom: 0.3rem;
+}
+
+cite {
+  display: block;
+  text-align: right;
+  color: #777;
+  font-size: 0.9rem;
+}
+
+/* === Meals === */
+.meals ul {
+  list-style: none;
+}
+
+.meals li {
+  margin: 0.4rem 0;
+  padding: 0.3rem 0.6rem;
+  background: #f9f9f9;
+  border-radius: 5px;
+}
+
+.meals strong {
+  color: #234a77;
+}
+
+/* === Footer === */
+footer {
+  margin-top: 1.5rem;
+  font-size: 0.85rem;
+  color: #666;
+  text-align: center;
+  border-top: 1px solid #eee;
+  padding-top: 0.8rem;
+}
+
+/* === Responsive === */
+@media (max-width: 600px) {
+  body {
+    padding: 0.5rem;
+  }
+
+  .container {
+    padding: 1rem;
+  }
+
+  header h1 {
+    font-size: 1.5rem;
+  }
+
+  .nav-buttons {
+    gap: 0.5rem;
+  }
+}
+.benefit, .fruits {
+  margin-top: 1rem;
+  background: #f6fbf6;
+  border-left: 4px solid #6ab36a;
+  padding: 0.8rem;
+  border-radius: 6px;
+}
+
+.benefit h3, .fruits h3 {
+  color: #2d662d;
+  margin-bottom: 0.4rem;
+}
+
+.fruits ul {
+  list-style: disc inside;
+}
+
+.fruits li {
+  margin: 0.3rem 0;
+}
