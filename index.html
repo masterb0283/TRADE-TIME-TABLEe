@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>P&L Calendar Dashboard</title>
+  <style>
+    body {
+      background-color: #000;
+      color: #fff;
+      font-family: "Inter", sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    .app {
+      max-width: 420px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+      margin-bottom: 10px;
+      opacity: 0.8;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      font-size: 20px;
+    }
+
+    h2 {
+      text-align: center;
+      margin: 5px 0 15px;
+      font-size: 16px;
+      color: #00ff7f;
+    }
+
+    .tabs {
+      display: flex;
+      justify-content: space-around;
+      background: #0d0d0d;
+      border-radius: 10px;
+      padding: 5px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 8px 0;
+      border: none;
+      background: transparent;
+      color: #666;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .tab.active-main {
+      background: #00ff7f33;
+      color: #00ff7f;
+      font-weight: bold;
+    }
+
+    .summary {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 25px;
+    }
+
+    .box {
+      background: #0d0d0d;
+      border-radius: 10px;
+      padding: 15px;
+      width: 48%;
+    }
+
+    .profit {
+      color: #00ff7f;
+      font-size: 22px;
+      font-weight: bold;
+      transition: color 0.2s;
+    }
+
+    .loss {
+      color: #ff5555 !important;
+    }
+
+    .goal-bar {
+      height: 8px;
+      background: #222;
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 8px 0;
+    }
+
+    .goal-fill {
+      height: 100%;
+      background: #00ff7f;
+      transition: width 0.3s;
+    }
+
+    .calendar {
+      margin-top: 20px;
+    }
+
+    .days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      text-align: center;
+      font-size: 12px;
+      color: #999;
+      margin-bottom: 10px;
+    }
+
+    .dates {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+    }
+
+    .cell {
+      background: #0b0b14;
+      border-radius: 8px;
+      height: 70px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      color: #ccc;
+      cursor: pointer;
+    }
+
+    .cell input {
+      width: 80%;
+      text-align: center;
+      border: none;
+      background: transparent;
+      color: #00ff7f;
+      font-size: 14px;
+      font-weight: bold;
+      outline: none;
+      transition: color 0.2s;
+    }
+
+    .cell input.loss {
+      color: #ff5555;
+    }
+
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    .input-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .input-box {
+      background: #0b0b14;
+      padding: 10px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .input-box input {
+      width: 80%;
+      border: none;
+      background: transparent;
+      color: #00ff7f;
+      font-size: 16px;
+      font-weight: bold;
+      text-align: center;
+      outline: none;
+      transition: color 0.2s;
+    }
+
+    .input-box input.loss {
+      color: #ff5555;
+    }
+
+    .notes {
+      margin-top: 15px;
+    }
+
+    .notes textarea {
+      width: 100%;
+      height: 80px;
+      background: #0b0b14;
+      color: #ccc;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 8px;
+      resize: none;
+      font-family: "Inter", sans-serif;
+      font-size: 14px;
+    }
+
+    .reset-btn {
+      margin-top: 10px;
+      display: block;
+      width: 100%;
+      background: #111;
+      color: #f55;
+      border: 1px solid #f55;
+      padding: 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="header">
+      <div class="time" id="live-time">--:-- 🌙</div>
+      <div class="date">📅</div>
+      <div class="icons">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+
+    <div class="content">
+      <h2>Trade only after confirm setup<br> PATIENCE PAYS 🧘‍♂️</h2>
+      <h1> MASTER-B P&L Calendar</h1>
+
+      <div class="tabs">
+        <button class="tab active-main" data-view="day">Day</button>
+        <button class="tab" data-view="week">Week</button>
+        <button class="tab" data-view="month">Month</button>
+        <button class="tab" data-view="year">Year</button>
+      </div>
+
+      <!-- DAY VIEW -->
+      <div id="day" class="view active">
+        <div class="summary">
+          <div class="box">
+            <h2>Daily Total</h2>
+            <p class="profit" id="day-total">$0.00</p>
+          </div>
+          <div class="box">
+            <h2>Goal</h2>
+            <input id="day-goal" type="number" />
+            <div class="goal-bar"><div class="goal-fill" id="day-fill"></div></div>
+          </div>
+        </div>
+        <div class="input-grid" id="day-inputs"></div>
+        <div class="notes">
+          <h3>📝 Day Notes</h3>
+          <textarea id="day-notes" placeholder="Write your daily notes..."></textarea>
+        </div>
+        <button class="reset-btn" onclick="resetPeriod('day')">Reset Day Data</button>
+      </div>
+
+      <!-- WEEK VIEW -->
+      <div id="week" class="view">
+        <div class="summary">
+          <div class="box">
+            <h2>Weekly Total</h2>
+            <p class="profit" id="week-total">$0.00</p>
+          </div>
+          <div class="box">
+            <h2>Goal</h2>
+            <input id="week-goal" type="number" />
+            <div class="goal-bar"><div class="goal-fill" id="week-fill"></div></div>
+          </div>
+        </div>
+        <div class="input-grid" id="week-inputs"></div>
+        <div class="notes">
+          <h3>📝 Week Notes</h3>
+          <textarea id="week-notes" placeholder="Write your weekly reflections..."></textarea>
+        </div>
+        <button class="reset-btn" onclick="resetPeriod('week')">Reset Week Data</button>
+      </div>
+
+      <!-- MONTH VIEW -->
+      <div id="month" class="view">
+        <div class="summary">
+          <div class="box">
+            <h2>Monthly Total</h2>
+            <p class="profit" id="month-total">$0.00</p>
+          </div>
+          <div class="box">
+            <h2>Goal</h2>
+            <input id="month-goal" type="number" />
+            <div class="goal-bar"><div class="goal-fill" id="month-fill"></div></div>
+          </div>
+        </div>
+        <div class="calendar">
+          <div class="days">
+            <div>MON</div><div>TUE</div><div>WED</div>
+            <div>THU</div><div>FRI</div><div>SAT</div><div>SUN</div>
+          </div>
+          <div class="dates" id="month-cells"></div>
+        </div>
+        <div class="notes">
+          <h3>📝 Month Notes</h3>
+          <textarea id="month-notes" placeholder="Write your monthly summary..."></textarea>
+        </div>
+        <button class="reset-btn" onclick="resetPeriod('month')">Reset Month Data</button>
+      </div>
+
+      <!-- YEAR VIEW -->
+      <div id="year" class="view">
+        <div class="summary">
+          <div class="box">
+            <h2>Yearly Total</h2>
+            <p class="profit" id="year-total">$0.00</p>
+          </div>
+          <div class="box">
+            <h2>Goal</h2>
+            <input id="year-goal" type="number" />
+            <div class="goal-bar"><div class="goal-fill" id="year-fill"></div></div>
+          </div>
+        </div>
+        <div class="input-grid" id="year-inputs"></div>
+        <div class="notes">
+          <h3>📝 Year Notes</h3>
+          <textarea id="year-notes" placeholder="Write your yearly performance review..."></textarea>
+        </div>
+        <button class="reset-btn" onclick="resetPeriod('year')">Reset Year Data</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Live time
+    setInterval(() => {
+      const now = new Date();
+      const t = `${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")} 🌙`;
+      document.getElementById("live-time").textContent = t;
+    }, 1000);
+
+    const saveData = (k,v)=>localStorage.setItem(k,JSON.stringify(v));
+    const loadData = (k,d)=>JSON.parse(localStorage.getItem(k)||JSON.stringify(d));
+
+    // Tabs
+    document.querySelectorAll(".tab").forEach(tab=>{
+      tab.addEventListener("click",()=>{
+        document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active-main"));
+        tab.classList.add("active-main");
+        document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+        document.getElementById(tab.dataset.view).classList.add("active");
+      });
+    });
+
+    // Notes persistence
+    ["day","week","month","year"].forEach(t=>{
+      const el=document.getElementById(`${t}-notes`);
+      el.value=loadData(`${t}Notes`,"");
+      el.addEventListener("input",()=>saveData(`${t}Notes`,el.value));
+    });
+
+    // Create Inputs
+    function createInputs(id,num,label,key){
+      const container=document.getElementById(id);
+      let data=loadData(key,new Array(num).fill(0));
+      container.innerHTML="";
+      for(let i=0;i<num;i++){
+        const div=document.createElement("div");
+        div.className="input-box";
+        div.innerHTML=`<div>${label} ${i+1}</div><input type="number" value="${data[i]}">`;
+        const input=div.querySelector("input");
+        if(data[i]<0) input.classList.add("loss");
+        input.addEventListener("input",e=>{
+          const v=parseFloat(e.target.value)||0;
+          e.target.classList.toggle("loss",v<0);
+          data[i]=v;
+          saveData(key,data);
+          updateTotals();
+        });
+        container.appendChild(div);
+      }
+      return data;
+    }
+
+    createInputs("day-inputs",5,"Trade","dayData");
+    createInputs("week-inputs",7,"Day","weekData");
+    createInputs("year-inputs",12,"Month","yearData");
+
+    // Month view
+    const monthCells=document.getElementById("month-cells");
+    let monthData=loadData("monthData",new Array(28).fill(0));
+    function renderMonth(){
+      monthCells.innerHTML="";
+      monthData.forEach((val,i)=>{
+        const cell=document.createElement("div");
+        cell.className="cell";
+        cell.innerHTML=`<input type="number" value="${val}" data-index="${i}">`;
+        const input=cell.querySelector("input");
+        if(val<0) input.classList.add("loss");
+        input.addEventListener("input",e=>{
+          const v=parseFloat(e.target.value)||0;
+          e.target.classList.toggle("loss",v<0);
+          monthData[i]=v;
+          saveData("monthData",monthData);
+          updateTotals();
+        });
+        monthCells.appendChild(cell);
+      });
+    }
+
+    // Goals
+    ["day","week","month","year"].forEach(t=>{
+      const g=document.getElementById(`${t}-goal`);
+      g.value=loadData(`${t}Goal`,0);
+      g.addEventListener("input",()=>{saveData(`${t}Goal`,parseFloat(g.value)||0);updateTotals();});
+    });
+
+    // Update totals
+    function updateTotals(){
+      const sets={
+        day:loadData("dayData",[]),
+        week:loadData("weekData",[]),
+        month:loadData("monthData",[]),
+        year:loadData("yearData",[])
+      };
+      for(const t in sets){
+        const total=sets[t].reduce((a,b)=>a+Number(b||0),0);
+        const goal=parseFloat(document.getElementById(`${t}-goal`).value)||1;
+        const el=document.getElementById(`${t}-total`);
+        el.textContent=`$${total.toLocaleString()}`;
+        el.classList.toggle("loss",total<0);
+        document.getElementById(`${t}-fill`).style.width=`${Math.min((total/goal)*100,100)}%`;
+      }
+    }
+
+    // Individual reset
+    function resetPeriod(period){
+      if(!confirm(`Reset all ${period.toUpperCase()} data and notes?`)) return;
+      localStorage.removeItem(`${period}Data`);
+      localStorage.removeItem(`${period}Notes`);
+      localStorage.removeItem(`${period}Goal`);
+      location.reload();
+    }
+
+    renderMonth();
+    updateTotals();
+  </script>
+</body>
+</html>
