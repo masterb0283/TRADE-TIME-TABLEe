@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FIXED MATCH ADMIN SOURCE MANAGEMENT</title> 
+
+<style>
+/* ===== GLOBAL RESET ===== */
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body{
+  background:linear-gradient(135deg,#0f172a,#1e293b);
+  display:flex;
+  justify-content:center;
+  padding:20px 0;
+}
+
+/* ===== APP CONTAINER ===== */
+.app{
+  width:390px;
+  background:#ffffff;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  border-radius:20px;
+  overflow:hidden;
+  box-shadow:0 20px 40px rgba(0,0,0,0.4);
+}
+
+/* ===== HEADER ===== */
+.header{
+  padding:20px;
+  text-align:center;
+  font-weight:800;
+  font-size:18px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  color:black;
+
+  background:linear-gradient(
+    90deg,
+    #c5a100,
+    #f9e27d,
+    #d4af37,
+    #f9e27d,
+    #c5a100
+  );
+
+  box-shadow:0 6px 20px rgba(212,175,55,0.6);
+}
+.country{
+  font-size:12px;
+  font-weight:500;
+  margin-top:6px;
+  opacity:0.9;
+  letter-spacing:1px;
+}
+.flag{
+  width:18px;
+  vertical-align:middle;
+  margin-right:6px;
+}
+/* ===== TABS ===== */
+.tabs{
+  display:flex;
+  background:#f1f5f9;
+}
+
+.tab{
+  flex:1;
+  text-align:center;
+  padding:14px;
+  font-weight:600;
+  cursor:pointer;
+  color:#64748b;
+  transition:0.3s ease;
+  position:relative;
+}
+
+.tab:hover{
+  background:#e2e8f0;
+}
+
+.tab.active{
+  color:#16a34a;
+}
+
+.tab.active::after{
+  content:"";
+  position:absolute;
+  bottom:0;
+  left:25%;
+  width:50%;
+  height:4px;
+  background:#16a34a;
+  border-radius:4px;
+}
+
+/* ===== SECTION TITLE ===== */
+.section-title{
+  padding:12px;
+  font-weight:600;
+  font-size:14px;
+  background:#f8fafc;
+  border-bottom:1px solid #e2e8f0;
+  color:#334155;
+}
+.bottom-nav button{
+  background:white;
+  border:1px solid #e2e8f0;
+  padding:10px 6px;
+  font-size:10px;
+  font-weight:700;
+  border-radius:10px;
+  width:30%;
+  transition:0.3s ease;
+}
+
+.bottom-nav button:hover{
+  background:#16a34a;
+  color:white;
+  transform:translateY(-3px);
+  box-shadow:0 8px 15px rgba(22,163,74,0.3);
+}
+/* ===== EVENT CARD ===== */
+.event-card{
+  margin:12px;
+  border-radius:16px;
+  background:linear-gradient(145deg,#ffffff,#f1f5f9);
+  box-shadow:0 8px 20px rgba(0,0,0,0.08);
+  transition:0.3s ease;
+  animation:fadeIn 0.4s ease;
+}
+
+.event-card:hover{
+  transform:translateY(-4px);
+  box-shadow:0 12px 25px rgba(0,0,0,0.15);
+}
+
+.teams{
+  display:flex;
+  justify-content:space-between;
+  padding:14px;
+  font-weight:600;
+  font-size:14px;
+  color:#1e293b;
+}
+
+.correct-score{
+  text-align:center;
+  padding:12px;
+  font-size:20px;
+  font-weight:700;
+  color:#dc2626;
+  letter-spacing:1px;
+  margin-right:10%;
+}
+
+.lock{
+  cursor:pointer;
+  margin:0 8px;
+  font-size:18px;
+  transition:0.2s;
+}
+
+.lock:hover{
+  transform:scale(1.2);
+}
+
+.event-footer{
+  display:flex;
+  justify-content:space-between;
+  padding:12px;
+  font-size:12px;
+  font-weight:600;
+  border-top:1px solid #e2e8f0;
+  background:#f8fafc;
+  border-radius:0 0 16px 16px;
+}
+
+.status-text{
+  color:#16a34a;
+}
+
+.finished-text{
+  color:#64748b;
+}
+
+/* ===== BOTTOM NAV ===== */
+.bottom-nav{
+  margin-top:auto;
+  display:flex;
+  justify-content:space-around;
+  padding:14px 0;
+  background:#5e5504;
+  border-top:1px solid #e2e8f0;
+}
+
+button{
+  padding:8px 10px;
+  font-size:11px;
+  font-weight:600;
+  border-radius:8px;
+  border:none;
+  cursor:pointer;
+  transition:0.3s ease;
+}
+
+/* ===== GREEN BUTTON ===== */
+.green-btn{
+  background:linear-gradient(90deg,#16a34a,#15803d);
+  color:white;
+  padding:12px;
+  width:100%;
+  border-radius:10px;
+  font-weight:600;
+  letter-spacing:0.5px;
+  transition:0.3s ease;
+}
+
+.green-btn:hover{
+  opacity:0.9;
+  transform:translateY(-2px);
+}
+
+/* ===== INPUT FIELDS ===== */
+input{
+  width:100%;
+  padding:10px;
+  margin:8px 0;
+  border-radius:8px;
+  border:1px solid #cbd5e1;
+  font-size:14px;
+  transition:0.3s;
+}
+
+input:focus{
+  border-color:#16a34a;
+  outline:none;
+  box-shadow:0 0 0 2px rgba(22,163,74,0.2);
+}
+
+/* ===== PAGES ===== */
+.page{
+  padding:20px;
+  animation:fadeIn 0.4s ease;
+}
+
+.page h3{
+  margin-bottom:12px;
+  color:#0f172a;
+}
+
+.link-btn{
+  color:#16a34a;
+  text-decoration:none;
+  cursor:pointer;
+  margin-top:12px;
+  display:block;
+  text-align:center;
+  font-size:13px;
+}
+
+.link-btn:hover{
+  text-decoration:underline;
+}
+
+/* ===== ADMIN PANEL ===== */
+.admin-panel{
+  padding:20px;
+}
+
+.admin-panel h3{
+  margin:12px 0;
+  font-size:15px;
+  color:#0f172a;
+}
+.contact-card{
+  background:white;
+  padding:18px;
+  border-radius:16px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.1);
+  animation:fadeIn 0.4s ease;
+}
+
+.subscription-box{
+  background:linear-gradient(135deg,#16a34a,#15803d);
+  color:white;
+  padding:12px;
+  border-radius:12px;
+  margin:8px 0;
+  font-weight:600;
+  text-align:center;
+  box-shadow:0 6px 15px rgba(0,0,0,0.15);
+  text-decoration:none;
+  display:block;
+  transition:0.3s ease;
+}
+
+.subscription-box:hover{
+  transform:translateY(-3px);
+  box-shadow:0 10px 20px rgba(0,0,0,0.25);
+}
+.save-btn{
+  margin-top:15px;
+  background:#0f172a;
+  color:white;
+  width:100%;
+  padding:12px;
+  border-radius:10px;
+}
+
+.save-btn:hover{
+  background:#1e293b;
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeIn{
+  from{opacity:0; transform:translateY(10px);}
+  to{opacity:1; transform:translateY(0);}
+}
+
+</style>
+</head>
+<body>
+
+<div class="app">
+
+<div class="header">
+  ΔΙΑΧΕΙΡΙΣΗ ΠΗΓΗΣ ΔΙΑΧΕΙΡΙΣΤΗ FIXED MATCH
+  <div class="country">
+  <img src="https://flagcdn.com/w20/gr.png" class="flag">
+</div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('pending')">Σημερινό VIP Εισιτήριο</div>
+  <div class="tab" onclick="switchTab('past')">Προηγούμενα VIP Εισιτήρια</div>
+</div>
+
+<div class="section-title" id="sectionTitle">
+ Σήμερα  | <span id="liveDate"></span>
+</div>
+
+<div id="events"></div>
+
+<div class="bottom-nav">
+  <button onclick="contactAdmin()">ΜΗΝΥΜΑ ΣΤΟΝ ΔΙΑΧΕΙΡΙΣΤΗ</button>
+  <button onclick="subscriberLogin()">ΞΕΚΛΕΙΔΩΜΑ ΕΙΣΙΤΗΡΙΟΥ</button>
+  <button onclick="openAdminLogin()">ΜΟΝΟ PREMIUM</button>
+</div>
+
+</div>
+
+<script>
+
+const ADMIN_PASSWORD="7777777";
+const SUBSCRIBER_PASSWORD="VIP7777777";
+const API_URL = "https://69a528e5885dcb6bd6a77901.mockapi.io/todo";
+
+let todayOdds = localStorage.getItem("todayOdds") || "15.2";
+let pastOdds = localStorage.getItem("pastOdds") || "15.2";
+
+let isSubscriber=false;
+
+const eventsDiv=document.getElementById("events");
+
+let pendingMatches = JSON.parse(localStorage.getItem("pendingMatches")) || [
+{home:"Boca Juniors",away:"River Plate",score:"2 - 1",odds:"15.2"},
+{home:"Racing Club",away:"Independiente",score:"1 - 1",odds:"12.8"},
+{home:"San Lorenzo",away:"Estudiantes",score:"3 - 0",odds:"18.4"},
+{home:"Vélez Sarsfield",away:"Rosario Central",score:"2 - 2",odds:"10.5"}
+];
+
+let pastMatches = JSON.parse(localStorage.getItem("pastMatches")) || [
+{match:"Boca Juniors vs River Plate",score:"2 - 1",odds:"15.2"},
+{match:"Racing Club vs Independiente",score:"1 - 1",odds:"12.8"},
+{match:"San Lorenzo vs Estudiantes",score:"3 - 0",odds:"18.4"},
+{match:"Vélez Sarsfield vs Rosario Central",score:"2 - 2",odds:"10.5"}
+];
+
+function updateDate() {
+  document.getElementById("liveDate").textContent =
+    new Date().toLocaleDateString();
+}
+
+updateDate();
+setInterval(updateDate, 60000); // updates every minute
+
+function getTeamLogo(team){
+const logos={
+  "Boca Juniors":"bocajuniors.com.ar",
+  "River Plate":"cariverplate.com.ar",
+  "Racing Club":"racingclub.com.ar",
+  "Independiente":"clubaindependiente.com.ar",
+  "San Lorenzo":"sanlorenzo.com.ar",
+  "Estudiantes":"estudiantesdelaplata.com",
+  "Vélez Sarsfield":"velezsarsfield.com.ar",
+  "Rosario Central":"rosariocentral.com"
+};
+
+let domain = logos[team] || "fifa.com";
+
+return `https://logo.clearbit.com/${domain}`;
+}
+
+async function loadFromServer() {
+  try {
+    const res = await fetch(API_URL + "/1");
+    const data = await res.json();
+
+    if (data) {
+      pendingMatches = data.pending || pendingMatches;
+      pastMatches = data.past || pastMatches;
+
+      // also update localStorage as backup
+      localStorage.setItem("pendingMatches", JSON.stringify(pendingMatches));
+      localStorage.setItem("pastMatches", JSON.stringify(pastMatches));
+    }
+
+    renderPending();
+  } catch (err) {
+    console.log("Server load failed, using localStorage.");
+    renderPending();
+  }
+}
+
+function renderPending(){
+eventsDiv.innerHTML="";
+
+pendingMatches.forEach(match=>{
+eventsDiv.innerHTML+=`
+<div class="event-card">
+<div class="teams">
+<div class="team">⚽ ${match.home}</div>
+<div>vs</div>
+<div class="team">⚽ ${match.away}</div>
+</div>
+
+<div class="correct-score">
+Σωστό Σκορ 
+${isSubscriber 
+? match.score 
+: `<span class="lock" onclick="contactAdmin()">🔒</span> 
+   - 
+   <span class="lock" onclick="contactAdmin()">🔒</span>`}
+<br>
+<span style="font-size:14px;color:#16a34a;">
+ΑΠΟΔΟΣΕΙΣ  - ${match.odds}
+</span>
+</div>
+
+<div class="event-footer">
+<span>Σημερινό Εισιτήριο</span>
+<span class="status-text">Σε Αναμονή</span>
+</div>
+</div>`;
+});
+}
+
+
+function renderPast(){
+eventsDiv.innerHTML="";
+
+pastMatches.forEach(match=>{
+
+let teams = match.match.split(" vs ");
+let home = teams[0] || "";
+let away = teams[1] || "";
+
+eventsDiv.innerHTML+=`
+<div class="event-card">
+<div class="teams">
+<div class="team">⚽ ${home}</div>
+<div>vs</div>
+<div class="team">⚽ ${away}</div>
+</div>
+
+<div class="correct-score">
+Σωστό Σκορ ${match.score}
+<br>
+<span style="font-size:14px;color:#16a34a;">
+ΑΠΟΔΟΣΕΙΣ  - ${match.odds}
+</span>
+</div>
+
+<div class="event-footer">
+<span>Προηγούμενο Εισιτήριο</span>
+<span class="finished-text">Ολοκληρώθηκε</span>
+</div>
+</div>`;
+});
+}
+
+function switchTab(type){
+document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+if(type==="pending"){
+document.querySelectorAll(".tab")[0].classList.add("active");
+renderPending();
+}else{
+document.querySelectorAll(".tab")[1].classList.add("active");
+renderPast();
+}
+}
+
+/* ---------------- CONTACT ADMIN PAGE ---------------- */
+
+function contactAdmin(){
+eventsDiv.innerHTML=`
+<div class="page">
+  <div class="contact-card">
+
+    <h3 style="text-align:center;margin-bottom:10px;">
+      Επικοινωνία με Διαχειριστή
+    </h3>
+
+    <p style="font-size:13px;color:#475569;text-align:center;">
+      Αγαπητέ πελάτη, αν είστε έτοιμοι να κερδίσετε μεγάλα ποσά με το VIP εισιτήριό μας,
+επικοινωνήστε με τον διαχειριστή για συνδρομή.
+    </p>
+
+    <div style="margin-top:15px;">
+      <p style="font-weight:600;margin-bottom:6px;">Διαθέσιμες Συνδρομές:</p>
+
+      <a href="https://t.me/Franklin_Fred" target="_blank" class="subscription-box">⚡ ΗΜΕΡΗΣΙΑ ΣΥΝΔΡΟΜΗ</a>
+      <a href="https://t.me/Franklin_Fred" target="_blank" class="subscription-box">🔥 ΕΒΔΟΜΑΔΙΑΙΑ ΣΥΝΔΡΟΜΗ</a>
+      <a href="https://t.me/Franklin_Fred" target="_blank" class="subscription-box">💎 ΜΗΝΙΑΙΑ ΣΥΝΔΡΟΜΗ</a>
+      <a href="https://t.me/Franklin_Fred" target="_blank" class="subscription-box">👑 ΕΤΗΣΙΑ ΣΥΝΔΡΟΜΗ</a>
+    </div>
+
+    <div style="margin-top:15px;">
+      <p style="font-size:12px;color:#64748b;">
+        <b>Σημείωση:</b> Θα έχετε πρόσβαση σε 4 σωστά σκορ καθημερινά μετά τη συνδρομή σας.
+      </p>
+    </div>
+
+    <div style="margin-top:15px;font-size:18px;">
+      <p><b>Telegram Διαχειριστή:</b> @Franklin_Fred</p>
+      <p><b>Email Διαχειριστή:</b> ipdfixedmatchmanagement@gmail.com</p>
+    </div>
+
+    <a href="https://t.me/Franklin_Fred" target="_blank"
+       class="green-btn"
+       style="display:block;text-align:center;text-decoration:none;margin-top:15px;">
+      ΠΑΤΗΣΤΕ ΕΔΩ ΓΙΑ ΑΠΕΥΘΕΙΑΣ ΜΗΝΥΜΑ
+    </a>
+
+    <button onclick="switchTab('pending')" 
+            class="green-btn"
+            style="margin-top:10px;background:#0f172a;">
+      ΠΙΣΩ
+    </button>
+
+  </div>
+</div>`;
+}
+
+/* ---------------- SUBSCRIBER LOGIN ---------------- */
+
+function subscriberLogin(){
+eventsDiv.innerHTML=`
+<div class="page">
+<h3>Σύνδεση Συνδρομητή</h3>
+<p>Παρακαλώ εισάγετε τον κωδικό συνδρομητή για να ξεκλειδώσετε το σημερινό εισιτήριο.</p>
+<input type="password" id="subPass" placeholder="Εισάγετε κωδικό συνδρομητή">
+<button class="green-btn" onclick="checkSubscriber()">ΣΥΝΕΧΕΙΑ</button>
+<span class="link-btn" onclick="contactAdmin()">Αν είστε νέος χρήστης, επικοινωνήστε με τον διαχειριστή για να λάβετε τον κωδικό σας</span>
+</div>`;
+}
+
+function checkSubscriber(){
+let pass=document.getElementById("subPass").value;
+if(pass===SUBSCRIBER_PASSWORD){
+isSubscriber=true;
+alert("Επιτυχής Σύνδεση!");
+renderPending();
+}else{
+alert("Λάθος Κωδικός Συνδρομητή!");
+}
+} 
+
+/* ---------------- ADMIN LOGIN ---------------- */
+
+function openAdminLogin(){
+let pass=prompt("Εισάγετε Κωδικό Premium:");
+if(pass===ADMIN_PASSWORD){
+alert("Η Πρόσβαση Premium Εγκρίθηκε");
+openAdminPanel();   // ✅ THIS LINE WAS MISSING
+}else{
+alert("Λάθος Κωδικός!");
+}
+}
+
+/* ---------------- ADMIN PANEL ---------------- */
+
+function openAdminPanel(){
+eventsDiv.innerHTML=`
+<div class="admin-panel">
+
+<h3>Επεξεργασία Σημερινών Εισιτηρίων</h3>
+${pendingMatches.map((m,i)=>`
+<input id="home${i}" value="${m.home}" placeholder="Γηπεδούχος Ομάδα">
+<input id="away${i}" value="${m.away}" placeholder="Φιλοξενούμενη Ομάδα">
+<input id="scorePending${i}" value="${m.score}" placeholder="Σωστό Σκορ">
+<input id="oddsPending${i}" value="${m.odds}" placeholder="Αποδόσεις">
+`).join("")}
+
+<h3>Edit Past Tickets</h3>
+${pastMatches.map((m,i)=>`
+<input id="match${i}" value="${m.match}" placeholder="Αγώνας">
+<input id="score${i}" value="${m.score}" placeholder="Σκορ">
+<input id="oddsPast${i}" value="${m.odds}" placeholder="Αποδόσεις">
+`).join("")}
+
+<button class="save-btn" onclick="saveAdmin()">ΑΠΟΘΗΚΕΥΣΗ ΑΛΛΑΓΩΝ</button>
+</div>`;
+}
+
+async function saveAdmin(){
+
+  pendingMatches = pendingMatches.map((m,i)=>({
+    home:document.getElementById("home"+i).value,
+    away:document.getElementById("away"+i).value,
+    score:document.getElementById("scorePending"+i).value,
+    odds:document.getElementById("oddsPending"+i).value
+  }));
+
+  pastMatches = pastMatches.map((m,i)=>({
+    match:document.getElementById("match"+i).value,
+    score:document.getElementById("score"+i).value,
+    odds:document.getElementById("oddsPast"+i).value
+  }));
+
+  // Save locally (backup)
+  localStorage.setItem("pendingMatches",JSON.stringify(pendingMatches));
+  localStorage.setItem("pastMatches",JSON.stringify(pastMatches));
+
+  try {
+    await fetch(API_URL + "/1", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        pending: pendingMatches,
+        past: pastMatches
+      })
+    });
+
+    alert("Changes Saved Successfully (All Browsers Updated)!");
+  } catch (err) {
+    alert("Saved locally, but server failed.");
+    console.log(err);
+  }
+
+  loadFromServer();
+}
+loadFromServer();
+
+</script>
+</body>
+</html>

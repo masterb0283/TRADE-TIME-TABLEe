@@ -1,0 +1,165 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: linear-gradient(180deg, #4b5563, #374151);
+  display: flex;
+  justify-content: center;
+  padding: 30px;
+  color: white;
+}
+
+.app {
+  width: 420px;
+}
+
+/* HEADER */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.header h1 {
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.editable {
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+
+.editable:hover {
+  border-bottom: 2px solid #22c55e;
+}
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  background: #e5e7eb;
+  color: #111827;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+
+/* CARD */
+.checking-card {
+  background: #1e1b4b;
+  border-radius: 22px;
+  padding: 22px;
+  display: flex;
+  justify-content: space-between;
+  box-shadow: 0 12px 25px rgba(0,0,0,0.4);
+  margin-bottom: 20px;
+}
+
+.account-type {
+  font-weight: 600;
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.account-number {
+  font-size: 13px;
+  opacity: 0.6;
+  margin-top: 4px;
+}
+
+.amount {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.available {
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+/* ALERTS */
+.alert {
+  background: #065f46;
+  padding: 12px 16px;
+  border-radius: 14px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  animation: slideDown 0.4s ease;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* TRANSACTIONS */
+.transactions {
+  background: #f9fafb;
+  border-radius: 24px;
+  padding: 22px;
+  color: #111827;
+}
+
+.transactions-header h2 {
+  font-weight: 700;
+  margin-bottom: 15px;
+}
+
+.transaction {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.transaction-title {
+  font-weight: 600;
+}
+
+.transaction-date {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.credit {
+  color: #16a34a;
+  font-weight: 700;
+}
+/* ACTION SECTION */
+.actions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.actions button {
+  background: #1f2937;
+  border: none;
+  border-radius: 18px;
+  padding: 14px 8px;
+  color: white;
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: 0.2s ease;
+  box-shadow: 0 6px 15px rgba(0,0,0,0.25);
+}
+
+.actions button i {
+  font-size: 18px;
+}
+
+.actions button:hover {
+  background: #111827;
+  transform: translateY(-3px);
+}

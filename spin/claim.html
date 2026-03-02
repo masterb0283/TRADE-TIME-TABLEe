@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Congratulations!</title>
+</head>
+<body style="text-align:center;font-family:Arial">
+
+<h2>🎉 Congratulations! 🎉</h2>
+
+<p id="prize"></p>
+
+<p>Take a screenshot of your prize and send it directly to <b>Sir John on Telegram</b> to claim it.</p>
+
+<button onclick="playAgain()">Spin Again</button>
+
+<script>
+const prize = localStorage.getItem("prize");
+document.getElementById("prize").textContent =
+  `You have successfully won: ${prize}`;
+
+function playAgain() {
+  // Check if user still has spins left
+  let spins = parseInt(localStorage.getItem("spinsLeft")) || 5;
+  if (spins > 0) {
+    window.location.href = "index.html";
+  } else {
+    alert("You have used all your spins!");
+  }
+}
+</script>
+
+</body>
+</html>
