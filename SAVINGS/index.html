@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Social Media App</title>
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial, sans-serif;
+}
+
+body{
+background:#f0f2f5;
+}
+
+header{
+background:#1877f2;
+color:white;
+padding:15px;
+text-align:center;
+font-size:22px;
+font-weight:bold;
+position:sticky;
+top:0;
+z-index:10;
+}
+
+.container{
+max-width:700px;
+margin:auto;
+padding:15px;
+}
+
+.card{
+background:white;
+padding:15px;
+border-radius:10px;
+margin-bottom:15px;
+box-shadow:0 2px 5px rgba(0,0,0,.1);
+}
+
+input{
+width:100%;
+padding:12px;
+margin:8px 0;
+border:1px solid #ccc;
+border-radius:8px;
+}
+
+button{
+width:100%;
+padding:12px;
+border:none;
+border-radius:8px;
+background:#1877f2;
+color:white;
+font-size:16px;
+cursor:pointer;
+margin-top:10px;
+}
+
+button:hover{
+opacity:.9;
+}
+
+.upload-btn{
+background:green;
+}
+
+.post{
+background:white;
+border-radius:10px;
+padding:12px;
+margin-bottom:15px;
+box-shadow:0 2px 5px rgba(0,0,0,.1);
+}
+
+.post img,
+.post video{
+width:100%;
+border-radius:10px;
+margin-top:10px;
+max-height:500px;
+object-fit:cover;
+}
+
+.meta{
+font-size:13px;
+color:#666;
+margin-top:8px;
+}
+
+#loading{
+text-align:center;
+padding:10px;
+color:#555;
+}
+</style>
+</head>
+
+<body>
+
+<header>My Social App</header>
+
+<div class="container">
+
+<div class="card">
+<h3>Upload Post</h3>
+
+<!-- MULTIPLE FILE SUPPORT -->
+<input type="file" id="mediaFile" accept="image/*,video/*" multiple>
+
+<button class="upload-btn" onclick="uploadPost()">
+Upload Post
+</button>
+</div>
+
+<div id="loading"></div>
+
+<div id="feed"></div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+getFirestore,
+addDoc,
+collection,
+query,
+orderBy,
+onSnapshot,
+serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+import {
+getStorage,
+ref,
+uploadBytes,
+getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAp9VTeFx2nOs8Op9WjLWpuYJMzPKAB3Hs",
+  authDomain: "social-902b4.firebaseapp.com",
+  projectId: "social-902b4",
+  storageBucket: "social-902b4.firebasestorage.app",
+  messagingSenderId: "361542429968",
+  appId: "1:361542429968:web:1b355a613736099b340995",
+  measurementId: "G-72L5T7HHTQ"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const storage = getStorage(app);
+
+window.uploadPost = async () => {
+
+const files = document.getElementById("mediaFile").files;
+
+if(!files.length){
+alert("Select files first");
+return;
+}
+
+document.getElementById("loading").innerHTML = "Uploading...";
+
+try {
+
+for (let file of files) {
+
+const fileName = Date.now() + "_" + file.name;
+
+const storageRef = ref(storage, "posts/" + fileName);
+
+await uploadBytes(storageRef, file);
+
+const mediaUrl = await getDownloadURL(storageRef);
+
+const mediaType = file.type.startsWith("video") ? "video" : "image";
+
+await addDoc(collection(db, "posts"), {
+username: "Anonymous",
+mediaUrl,
+mediaType,
+createdAt: serverTimestamp()
+});
+
+}
+
+document.getElementById("mediaFile").value = "";
+
+document.getElementById("loading").innerHTML = "Upload completed";
+
+}catch(error){
+console.log(error);
+alert(error.code + ": " + error.message);
+}
+
+setTimeout(()=>{
+document.getElementById("loading").innerHTML = "";
+},2000);
+
+};
+
+function loadFeed(){
+
+const feed = document.getElementById("feed");
+
+const q = query(
+collection(db,"posts"),
+orderBy("createdAt","desc")
+);
+
+onSnapshot(q,(snapshot)=>{
+
+feed.innerHTML = "";
+
+snapshot.forEach((docSnap)=>{
+
+const post = docSnap.data();
+
+let mediaHTML = "";
+
+if(post.mediaType === "image"){
+mediaHTML = `<img src="${post.mediaUrl}">`;
+}else{
+mediaHTML = `
+<video controls>
+<source src="${post.mediaUrl}">
+</video>
+`;
+}
+
+const date = post.createdAt?.toDate
+? post.createdAt.toDate()
+: new Date();
+
+feed.innerHTML += `
+<div class="post">
+
+<b>${post.username}</b>
+
+${mediaHTML}
+
+<div class="meta">
+${date.toLocaleString()}
+</div>
+
+</div>
+`;
+});
+
+});
+}
+
+loadFeed();
+
+</script>
+
+</body>
+=</html>\

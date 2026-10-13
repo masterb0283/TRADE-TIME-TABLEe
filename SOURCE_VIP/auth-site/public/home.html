@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIP Sports Betting Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ================= RESET & BASE ================= */
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif;}
+html,body{overflow-x:hidden;}
+body{
+  background:#0b1120;
+  color:#e2e8f0;
+  display:flex;
+  justify-content:center;
+  min-height:100vh;
+  padding:20px 0;
+}
+.app{
+  width:100%;
+  max-width:1200px;
+  background:#0f172a;
+  min-height:95vh;
+  display:flex;
+  flex-direction:column;
+  border-radius:24px;
+  overflow:hidden;
+  box-shadow:0 25px 50px -12px rgba(0,0,0,0.8);
+  border:1px solid #1e293b;
+  position:relative;
+}
+
+/* ================= HERO BANNER ================= */
+.hero-section{
+  position:relative;
+  height:240px;
+  background: linear-gradient(rgba(15,23,42,0.6), rgba(15,23,42,0.9)), url('https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=2070&auto=format&fit=crop') center/cover;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0 40px;
+  border-bottom:1px solid #1e293b;
+  overflow:hidden;
+}
+
+.header-player {
+  position: absolute;
+  bottom: 0;
+  right: 30px;
+  height: 90%;
+  width: auto;
+  object-fit: contain;
+  object-position: bottom right;
+  filter: drop-shadow(-10px 0 20px rgba(0,0,0,0.8));
+  z-index: 1;
+  display: none;
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+.header-player.has-image { display: block; }
+
+.hero-ball {
+  position: absolute;
+  top: 20px;
+  left: 30px;
+  width: 160px;
+  height: 160px;
+  object-fit: contain;
+  filter: drop-shadow(0 15px 25px rgba(0,0,0,0.8));
+  animation: floatBall 6s ease-in-out infinite;
+  z-index: 1;
+  display: none;
+  pointer-events: none;
+}
+.hero-ball.has-image { display: block; }
+
+.hero-content{
+  position:relative;
+  z-index:2;
+  text-align: center;
+  max-width: 60%;
+}
+.hero-content h1{
+  font-size:36px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:2px;
+  color:#fff;
+  text-shadow:0 4px 20px rgba(0,0,0,0.7);
+  margin-bottom:5px;
+}
+.hero-content h1 span{
+  color:#3b82f6;
+  text-shadow:0 0 20px rgba(59,130,246,0.5);
+}
+.hero-content p{
+  font-size:14px;
+  color:#94a3b8;
+  font-weight:500;
+}
+.live-badge{
+  background:rgba(239,68,68,0.2);
+  color:#ef4444;
+  padding:4px 12px;
+  border-radius:20px;
+  font-size:11px;
+  font-weight:700;
+  border:1px solid rgba(239,68,68,0.3);
+  display:inline-block;
+  margin-bottom:10px;
+  text-transform:uppercase;
+}
+
+/* ================= TOP NAV & TABS ================= */
+.top-nav{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:15px 40px;
+  background:#0f172a;
+  border-bottom:1px solid #1e293b;
+  position:relative;
+  z-index:3;
+}
+.tabs{
+  display:flex;
+  gap:15px;
+  background:#1e293b;
+  padding:6px;
+  border-radius:12px;
+}
+.tab{
+  padding:10px 24px;
+  font-weight:600;
+  font-size:14px;
+  cursor:pointer;
+  color:#94a3b8;
+  border-radius:8px;
+  transition:all 0.3s ease;
+  white-space: nowrap;
+}
+.tab:hover{color:#fff;}
+.tab.active{
+  background:#3b82f6;
+  color:#fff;
+  box-shadow:0 4px 15px rgba(59,130,246,0.4);
+}
+.date-display{
+  font-size:14px;
+  font-weight:600;
+  color:#94a3b8;
+  background:#1e293b;
+  padding:8px 16px;
+  border-radius:8px;
+  white-space: nowrap;
+}
+
+/* ================= MAIN CONTENT ================= */
+.main-content{
+  padding:30px 40px;
+  flex:1;
+  overflow-y:auto;
+}
+.section-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:20px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.section-header h2{
+  font-size:20px;
+  font-weight:700;
+  color:#f8fafc;
+}
+.section-header .odds-badge{
+  background:#1e293b;
+  color:#fbbf24;
+  padding:6px 16px;
+  border-radius:8px;
+  font-weight:700;
+  font-size:14px;
+  border:1px solid #334155;
+  white-space: nowrap;
+}
+
+/* ================= MATCH GRID ================= */
+.matches-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(320px, 1fr));
+  gap:20px;
+}
+.event-card{
+  background:#1e293b;
+  border-radius:16px;
+  border:1px solid #334155;
+  overflow:hidden;
+  transition:all 0.3s ease;
+  position:relative;
+  display:flex;
+  flex-direction:column;
+}
+.event-card:hover{
+  transform:translateY(-5px);
+  border-color:#3b82f6;
+  box-shadow:0 10px 30px rgba(0,0,0,0.4);
+}
+.card-header{
+  padding:15px 20px;
+  background:rgba(15,23,42,0.5);
+  border-bottom:1px solid #334155;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-size:12px;
+  font-weight:600;
+  color:#94a3b8;
+}
+.league-tag{
+  background:#334155;
+  padding:4px 10px;
+  border-radius:6px;
+  color:#e2e8f0;
+}
+.card-body{
+  padding:20px;
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+.teams-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:15px;
+  gap: 8px;
+}
+.team{
+  font-size:15px;
+  font-weight:700;
+  color:#f8fafc;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-width: 0;
+  flex: 1;
+  word-break: break-word;
+}
+.team:last-child{
+  justify-content: flex-end;
+  text-align: right;
+}
+.team-logo{
+  width:24px;
+  height:24px;
+  border-radius:50%;
+  object-fit: cover;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.vs-badge{
+  font-size:12px;
+  font-weight:700;
+  color:#64748b;
+  background:#0f172a;
+  padding:4px 8px;
+  border-radius:4px;
+  flex-shrink: 0;
+}
+.score-display{
+  text-align:center;
+  background:#0f172a;
+  padding:15px;
+  border-radius:12px;
+  border:1px solid #1e293b;
+  margin-top:10px;
+}
+.score-label{
+  font-size:11px;
+  color:#64748b;
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:1px;
+  margin-bottom:5px;
+}
+.score-value{
+  font-size:24px;
+  font-weight:800;
+  color:#3b82f6;
+  letter-spacing:2px;
+}
+.score-value.locked{
+  color:#64748b;
+  font-size:18px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+}
+.lock-icon{
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  cursor:pointer;
+  transition:transform 0.2s;
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
+  display: none;
+}
+.lock-icon.has-image { display: inline-block; }
+.lock-icon:hover{transform:scale(1.15);}
+
+.lock-fallback {
+  font-size: 24px;
+  cursor: pointer;
+  display: inline-block;
+}
+
+.odds-tag{
+  font-size:14px;
+  font-weight:700;
+  color:#10b981;
+  margin-top:10px;
+  display:block;
+  text-align:center;
+}
+.card-footer{
+  padding:12px 20px;
+  background:rgba(15,23,42,0.5);
+  border-top:1px solid #334155;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-size:12px;
+  font-weight:600;
+}
+.status-pending{color:#f59e0b;}
+.status-finished{color:#64748b;}
+
+/* ================= BOTTOM NAVIGATION ================= */
+.bottom-nav{
+  display:flex;
+  justify-content:center;
+  gap:15px;
+  padding:20px 40px;
+  background:#0f172a;
+  border-top:1px solid #1e293b;
+  flex-wrap: wrap;
+}
+.bottom-nav button{
+  background:#1e293b;
+  border:1px solid #334155;
+  padding:12px 24px;
+  font-size:13px;
+  font-weight:700;
+  border-radius:10px;
+  color:#94a3b8;
+  cursor:pointer;
+  transition:all 0.3s ease;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  white-space: nowrap;
+}
+.bottom-nav button:hover{
+  background:#3b82f6;
+  color:#fff;
+  border-color:#3b82f6;
+  transform:translateY(-2px);
+  box-shadow:0 8px 20px rgba(59,130,246,0.3);
+}
+.btn-primary{
+  background:linear-gradient(90deg,#3b82f6,#8b5cf6) !important;
+  color:#fff !important;
+  border:none !important;
+}
+.btn-primary:hover{
+  box-shadow:0 8px 25px rgba(139,92,246,0.5) !important;
+}
+.security-badge{
+  font-size:11px;
+  background:#0f172a;
+  color:#64748b;
+  text-align:center;
+  padding:12px;
+  letter-spacing:1px;
+  border-top:1px solid #1e293b;
+}
+
+/* ================= MODALS & PAGES ================= */
+.page-overlay{
+  position:absolute;
+  top:0;left:0;width:100%;height:100%;
+  background:rgba(11,17,32,0.95);
+  backdrop-filter:blur(10px);
+  z-index:100;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  animation:fadeIn 0.3s ease;
+}
+.page-content{
+  background:#1e293b;
+  border-radius:20px;
+  padding:30px;
+  width:100%;
+  max-width:450px;
+  border:1px solid #334155;
+  box-shadow:0 25px 50px rgba(0,0,0,0.5);
+  animation:slideUp 0.3s ease;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.page-content h3{
+  font-size:20px;
+  font-weight:700;
+  color:#f8fafc;
+  margin-bottom:15px;
+  text-align:center;
+}
+.page-content p{
+  font-size:14px;
+  color:#94a3b8;
+  text-align:center;
+  margin-bottom:20px;
+  line-height:1.6;
+}
+.input-group{
+  margin-bottom:15px;
+}
+.input-group label{
+  display:block;
+  font-size:12px;
+  font-weight:600;
+  color:#94a3b8;
+  margin-bottom:6px;
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+}
+.input-group input{
+  width:100%;
+  padding:14px;
+  border-radius:10px;
+  border:1px solid #334155;
+  background:#0f172a;
+  color:#f8fafc;
+  font-size:14px;
+  transition:all 0.3s;
+}
+.input-group input:focus{
+  outline:none;
+  border-color:#3b82f6;
+  box-shadow:0 0 0 3px rgba(59,130,246,0.2);
+}
+.green-btn{
+  width:100%;
+  padding:14px;
+  background:linear-gradient(90deg,#10b981,#059669);
+  color:#fff;
+  border:none;
+  border-radius:10px;
+  font-weight:700;
+  font-size:14px;
+  cursor:pointer;
+  transition:all 0.3s;
+  margin-top:10px;
+}
+.green-btn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 10px 25px rgba(16,185,129,0.4);
+}
+.link-btn{
+  display:block;
+  text-align:center;
+  color:#3b82f6;
+  font-size:13px;
+  font-weight:600;
+  margin-top:15px;
+  cursor:pointer;
+  text-decoration:none;
+}
+.link-btn:hover{text-decoration:underline;}
+.subscription-box{
+  display:block;
+  padding:14px;
+  border-radius:10px;
+  text-align:center;
+  font-weight:700;
+  font-size:14px;
+  text-decoration:none;
+  margin-bottom:10px;
+  transition:all 0.3s;
+  background:#0f172a;
+  border:1px solid #334155;
+  color:#e2e8f0;
+}
+.subscription-box:hover{
+  border-color:#3b82f6;
+  background:#1e293b;
+  transform:translateX(5px);
+}
+.subscription-box.daily{border-left:4px solid #3b82f6;}
+.subscription-box.weekly{border-left:4px solid #8b5cf6;}
+.subscription-box.monthly{border-left:4px solid #f59e0b;}
+.subscription-box.yearly{border-left:4px solid #ef4444;}
+
+/* Admin Panel Specifics */
+.admin-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:15px;
+}
+.admin-grid input{
+  width:100%;
+  padding:10px;
+  border-radius:8px;
+  border:1px solid #334155;
+  background:#0f172a;
+  color:#f8fafc;
+  font-size:13px;
+}
+.admin-section-title{
+  font-size:14px;
+  font-weight:700;
+  color:#3b82f6;
+  margin:20px 0 10px;
+  padding-bottom:5px;
+  border-bottom:1px solid #334155;
+}
+.file-upload-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #0f172a;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px dashed #334155;
+  flex-wrap: wrap;
+}
+.file-upload-group label {
+  font-size: 12px;
+  color: #94a3b8;
+  flex: 1;
+  min-width: 100px;
+}
+.file-upload-group input[type="file"] {
+  font-size: 12px;
+  color: #e2e8f0;
+  max-width: 100%;
+}
+.preview-img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 4px;
+  background: #1e293b;
+  display: none;
+}
+.preview-img.has-image { display: block; }
+
+.code-display-box {
+  background: #0f172a;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid #334155;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.code-display-box span {
+  font-family: monospace;
+  font-size: 16px;
+  font-weight: 700;
+  color: #10b981;
+  letter-spacing: 2px;
+  background: #1e293b;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #334155;
+}
+.code-edit-wrapper {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  flex-wrap: wrap;
+}
+.code-edit-wrapper input {
+  flex: 1;
+  min-width: 150px;
+}
+
+/* Animations */
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+@keyframes floatBall{0%{transform:translateY(0px) rotate(0deg);}50%{transform:translateY(-15px) rotate(10deg);}100%{transform:translateY(0px) rotate(0deg);}}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:8px;}
+::-webkit-scrollbar-track{background:#0f172a;}
+::-webkit-scrollbar-thumb{background:#334155;border-radius:4px;}
+::-webkit-scrollbar-thumb:hover{background:#475569;}
+
+/* ================= RESPONSIVE ================= */
+@media(max-width:900px){
+  .admin-grid{grid-template-columns:1fr;}
+}
+
+@media(max-width:768px){
+  body{padding:0;}
+  .app{width:100%;border-radius:0;min-height:100vh;max-width:100%;}
+  .hero-section{padding:15px 20px;height:180px;}
+  .hero-content{max-width: 85%;}
+  .hero-content h1{font-size:22px;letter-spacing:1px;}
+  .hero-content p{font-size:12px;}
+  .hero-ball{width:70px;height:70px;top:10px;left:10px;} 
+  .header-player{height: 70%; right: 5px; opacity: 0.85;} 
+  .top-nav{padding:15px 20px;flex-direction:column;gap:12px;align-items:stretch;}
+  .tabs{width:100%;justify-content:center;}
+  .tab{padding:8px 14px;font-size:12px;flex:1;text-align:center;}
+  .date-display{text-align:center;font-size:12px;padding:6px 12px;}
+  .main-content{padding:20px 15px;}
+  .section-header{flex-direction: column; align-items: flex-start;}
+  .section-header h2{font-size:17px;}
+  .section-header .odds-badge{font-size:12px;padding:5px 12px;}
+  .matches-grid{grid-template-columns:1fr;}
+  .event-card{border-radius: 12px;}
+  .team{font-size:13px;gap:5px;}
+  .team-logo{width:20px;height:20px;}
+  .score-value{font-size:20px;}
+  .card-body{padding:15px;}
+  .card-header, .card-footer{padding:12px 15px;font-size:11px;}
+  .bottom-nav{padding:12px 15px;flex-wrap:wrap;gap:8px;}
+  .bottom-nav button{flex:1;justify-content:center;padding:10px 8px;font-size:11px;min-width: 0;}
+  .page-content{padding:20px 18px;border-radius:16px;max-width:100%;}
+  .page-content h3{font-size:17px;}
+  .page-content p{font-size:13px;}
+  .green-btn{padding:12px;font-size:13px;}
+  .subscription-box{padding:12px;font-size:13px;}
+  .admin-grid{grid-template-columns:1fr;}
+  .code-display-box{flex-direction: column; align-items: flex-start;}
+  .code-display-box span{font-size: 14px; align-self: stretch; text-align: center;}
+  .code-edit-wrapper{flex-direction: column;}
+  .code-edit-wrapper input, .code-edit-wrapper button{width: 100%;}
+  .file-upload-group{flex-direction: column; align-items: flex-start;}
+  .file-upload-group label{width: 100%;}
+}
+
+@media(max-width:420px){
+  .hero-content h1{font-size:18px;}
+  .hero-content p{font-size:11px;}
+  .hero-ball{width:55px;height:55px;}
+  .header-player{height: 65%;}
+  .live-badge{font-size: 10px; padding: 3px 10px;}
+  .tab{padding:7px 10px;font-size:11px;}
+  .bottom-nav button{font-size:10px;padding:9px 6px;}
+  .team{font-size:12px;}
+  .team-logo{width:18px;height:18px;}
+  .vs-badge{font-size:10px;padding:3px 6px;}
+  .score-value{font-size:18px;}
+}
+
+.bottom-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+.toggle-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+.toggle-btn {
+  background: linear-gradient(90deg,#3b82f6,#8b5cf6) !important;
+  color:#fff !important;
+  border: none !important;
+  padding: 14px 40px !important;
+  font-size: 16px !important;
+  border-radius: 12px !important;
+  font-weight: 700 !important;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 25px rgba(139,92,246,0.4);
+  width: auto;
+  min-width: 220px;
+}
+.toggle-btn:hover {
+  transform: scale(1.02);
+  box-shadow: 0 12px 30px rgba(139,92,246,0.6);
+}
+.hidden-buttons {
+  display: none;
+  flex-wrap: wrap;
+  gap: 15px;
+  justify-content: center;
+  width: 100%;
+  margin-top: 10px;
+}
+.hidden-buttons.visible {
+  display: flex;
+}
+
+/* ================= NEW: Secondary Button (Contact Admin) ================= */
+.secondary-btn {
+  width: 100%;
+  padding: 13px;
+  background: #0f172a;
+  color: #3b82f6;
+  border: 1px solid #3b82f6;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.secondary-btn:hover {
+  background: #1e3a5f;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(59,130,246,0.3);
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HERO BANNER -->
+  <div class="hero-section">
+    <img id="heroBall" class="hero-ball" src="" alt="Soccer Ball">
+    <div class="hero-content">
+      <div class="live-badge">● VIP Live Updates</div>
+      <h1>VIP <span>Sports</span> Betting</h1>
+      <p>Premium Fixed Matches & Correct Score Predictions</p>
+    </div>
+    <img id="headerPlayer" class="header-player" src="" alt="Player">
+  </div>
+
+  <!-- TOP NAVIGATION -->
+  <div class="top-nav">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('pending')">Today VIP Ticket</div>
+      <div class="tab" onclick="switchTab('past')">Past VIP Tickets</div>
+    </div>
+    <div class="date-display" id="liveDate"></div>
+  </div>
+
+  <!-- MAIN CONTENT AREA -->
+  <div class="main-content" id="mainContent"></div>
+
+  <!-- BOTTOM NAVIGATION -->
+  <div class="bottom-nav">
+    <div class="bottom-actions">
+      <div class="toggle-container" id="toggleContainer">
+        <button class="toggle-btn" id="mainSubscribeBtn" onclick="toggleButtons()">Access ticket</button>
+      </div>
+      <div class="hidden-buttons" id="hiddenButtons">
+        <button onclick="contactAdmin()">💬 Subscription</button>
+        <button onclick="subscriberLogin()">🔓 Unlock Ticket</button>
+        <button class="btn-primary" onclick="openAdminLogin()">👑 Premium Only</button>
+      </div>
+    </div>
+  </div>
+  <div class="security-badge">🔒 VIP SERVER VERIFIED</div>
+
+</div>
+
+<script>
+/* ============================================================
+   TOGGLE FUNCTION
+   ============================================================ */
+function toggleButtons() {
+  document.getElementById('hiddenButtons').classList.add('visible');
+  document.getElementById('toggleContainer').style.display = 'none';
+}
+
+/* ============================================================
+   SHA-256 HASHING UTILITY
+   ============================================================ */
+async function sha256(message) {
+  const msgBuffer = new TextEncoder().encode(message);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/* ============================================================
+   SECURE PASSWORD VAULT
+   ============================================================ */
+const secureVault = (function () {
+
+  const ADMIN_HASH = "8c1cdb9cb4dbac6dbb6ebd118ec8f9523d22e4e4cb8cc9df5f7e1e499bba3c10";
+
+  let SUB_HASH = localStorage.getItem("subscriberHash") || "";
+
+  return {
+    verifyAdmin: async function (input) {
+      if (!input) return false;
+      const h = await sha256(input);
+      return h === ADMIN_HASH;
+    },
+    verifySubscriber: async function (input) {
+      if (!input || !SUB_HASH) return false;
+      const h = await sha256(input);
+      return h === SUB_HASH;
+    },
+    hasSubscriberCode: function () { return SUB_HASH !== ""; },
+    setSubscriberCode: async function (newCode) {
+      const h = await sha256(newCode);
+      SUB_HASH = h;
+      localStorage.setItem("subscriberHash", h);
+      return true;
+    },
+    clearSubscriberCode: function () {
+      SUB_HASH = "";
+      localStorage.removeItem("subscriberHash");
+    }
+  };
+})();
+
+/* ============================================================
+   APP STATE
+   ============================================================ */
+const API_URL = "https://69a528e5885dcb6bd6a77901.mockapi.io/todo";
+let todayOdds = localStorage.getItem("todayOdds") || "15.2";
+let pastOdds = localStorage.getItem("pastOdds") || "15.2";
+let isSubscriber = false;
+const mainContent = document.getElementById("mainContent");
+
+let headerPlayerData = localStorage.getItem("headerPlayerData") || "";
+let heroBallData = localStorage.getItem("heroBallData") || "";
+let lockIconData = localStorage.getItem("lockIconData") || "";
+let teamIconData = localStorage.getItem("teamIconData") || "";
+
+let pendingMatches = JSON.parse(localStorage.getItem("pendingMatches")) || [
+  {home:"Boca Juniors",away:"River Plate",score:"2 - 1",odds:"15.2"},
+  {home:"Racing Club",away:"Independiente",score:"1 - 1",odds:"12.8"},
+  {home:"San Lorenzo",away:"Estudiantes",score:"3 - 0",odds:"18.4"},
+  {home:"Vélez Sarsfield",away:"Rosario Central",score:"2 - 2",odds:"10.5"}
+];
+
+let pastMatches = JSON.parse(localStorage.getItem("pastMatches")) || [
+  {match:"Boca Juniors vs River Plate",score:"2 - 1",odds:"15.2"},
+  {match:"Racing Club vs Independiente",score:"1 - 1",odds:"12.8"},
+  {match:"San Lorenzo vs Estudiantes",score:"3 - 0",odds:"18.4"},
+  {match:"Vélez Sarsfield vs Rosario Central",score:"2 - 2",odds:"10.5"}
+];
+
+/* ============================================================
+   UI HELPERS
+   ============================================================ */
+function updateDate(){
+  document.getElementById("liveDate").textContent = new Date().toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+}
+updateDate();
+setInterval(updateDate, 60000);
+
+function loadImages() {
+  const headerPlayer = document.getElementById("headerPlayer");
+  if (headerPlayerData) {
+    headerPlayer.src = headerPlayerData;
+    headerPlayer.classList.add("has-image");
+  } else {
+    headerPlayer.classList.remove("has-image");
+  }
+
+  const heroBall = document.getElementById("heroBall");
+  if (heroBallData) {
+    heroBall.src = heroBallData;
+    heroBall.classList.add("has-image");
+  } else {
+    heroBall.classList.remove("has-image");
+  }
+}
+loadImages();
+
+function getTeamLogoHtml() {
+  if (teamIconData) {
+    return `<img src="${teamIconData}" class="team-logo" alt="Team">`;
+  }
+  return `<div class="team-logo" style="background:#334155; display:flex; align-items:center; justify-content:center; font-size:10px; color:#94a3b8;">?</div>`;
+}
+
+/* ============================================================
+   RENDER FUNCTIONS
+   ============================================================ */
+function renderPending(){
+  let html = `
+  <div class="section-header">
+    <h2>🔥 Top Games Today</h2>
+    <div class="odds-badge">Total Odds: ${todayOdds}</div>
+  </div>
+  <div class="matches-grid">`;
+
+  pendingMatches.forEach(match=>{
+    let lockHtml = `<span class="lock-fallback" onclick="contactAdmin()">🔒</span>`;
+    if (lockIconData) {
+      lockHtml = `<img src="${lockIconData}" class="lock-icon has-image" onclick="contactAdmin()" alt="Locked">`;
+    }
+    let teamLogo = getTeamLogoHtml();
+
+    html += `
+    <div class="event-card">
+      <div class="card-header">
+        <span class="league-tag">VIP League</span>
+        <span>Today</span>
+      </div>
+      <div class="card-body">
+        <div class="teams-row">
+          <div class="team">${teamLogo}${match.home}</div>
+          <div class="vs-badge">VS</div>
+          <div class="team">${match.away}${teamLogo}</div>
+        </div>
+        <div class="score-display">
+          <div class="score-label">Correct Score</div>
+          <div class="score-value ${isSubscriber ? '' : 'locked'}">
+            ${isSubscriber ? match.score : `${lockHtml} - ${lockHtml}`}
+          </div>
+          <span class="odds-tag">ODDS - ${match.odds}</span>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span>Today Ticket</span>
+        <span class="status-pending">● Pending</span>
+      </div>
+    </div>`;
+  });
+
+  html += `</div>`;
+  mainContent.innerHTML = html;
+}
+
+function renderPast(){
+  let html = `
+  <div class="section-header">
+    <h2>📊 Past VIP Tickets</h2>
+    <div class="odds-badge">Total Odds: ${pastOdds}</div>
+  </div>
+  <div class="matches-grid">`;
+
+  pastMatches.forEach(match=>{
+    let teams = match.match.split(" vs ");
+    let home = teams[0] || "";
+    let away = teams[1] || "";
+    let teamLogo = getTeamLogoHtml();
+
+    html += `
+    <div class="event-card">
+      <div class="card-header">
+        <span class="league-tag">Finished</span>
+        <span>History</span>
+      </div>
+      <div class="card-body">
+        <div class="teams-row">
+          <div class="team">${teamLogo}${home}</div>
+          <div class="vs-badge">VS</div>
+          <div class="team">${away}${teamLogo}</div>
+        </div>
+        <div class="score-display" style="border-color:#10b981;">
+          <div class="score-label">Final Score</div>
+          <div class="score-value" style="color:#10b981;">${match.score}</div>
+          <span class="odds-tag" style="color:#fbbf24;">ODDS - ${match.odds}</span>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span>Past Ticket</span>
+        <span class="status-finished">✔ Finished</span>
+      </div>
+    </div>`;
+  });
+
+  html += `</div>`;
+  mainContent.innerHTML = html;
+}
+
+function switchTab(type){
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  if(type==="pending"){
+    document.querySelectorAll(".tab")[0].classList.add("active");
+    renderPending();
+  }else{
+    document.querySelectorAll(".tab")[1].classList.add("active");
+    renderPast();
+  }
+}
+
+/* ============================================================
+   CONTACT PAGE
+   ============================================================ */
+function contactAdmin(){
+  mainContent.innerHTML = `
+  <div class="page-overlay">
+    <div class="page-content">
+      <h3>💬 Contact Admin</h3>
+      <p>Dear customer, if you are ready to win big on our VIP ticket, you should contact the admin to subscribe.</p>
+      
+      <div style="margin-top:15px;">
+        <p style="font-weight:600;margin-bottom:10px;color:#f8fafc;font-size:14px;">Available Subscriptions:</p>
+        <a href="#" onclick="showSubscriptionDetail('daily'); return false;" class="subscription-box daily">⚡ Daily Subscription</a>
+        <a href="#" onclick="showSubscriptionDetail('weekly'); return false;" class="subscription-box weekly">🔥 Weekly Subscription</a>
+        <a href="#" onclick="showSubscriptionDetail('monthly'); return false;" class="subscription-box monthly">💎 Monthly Subscription</a>
+        <a href="#" onclick="showSubscriptionDetail('yearly'); return false;" class="subscription-box yearly">👑 Yearly Subscription</a>
+      </div>
+      
+      <div style="margin-top:15px;font-size:14px;color:#94a3b8;text-align:center;">
+        <p><b>Admin Telegram:</b> @Franklin_Fred</p>
+        <p><b>Admin Email:</b> ipdfixedsupport@gmail.com</p>
+      </div>
+      
+      <a href="https://t.me/Franklin_Fred" target="_blank" class="green-btn" style="display:block;text-align:center;text-decoration:none;">
+        Message Admin Directly
+      </a>
+      <button onclick="switchTab('pending')" class="link-btn" style="background:none;border:none;width:100%;">← Back to Tickets</button>
+    </div>
+  </div>`;
+}
+
+/* ============================================================
+   SUBSCRIPTION DETAIL PAGE
+   ============================================================ */
+function showSubscriptionDetail(planType) {
+  let planLabel = '';
+  let price = '';
+  
+  switch(planType) {
+    case 'daily': planLabel = 'Daily Subscription'; price = '€100'; break;
+    case 'weekly': planLabel = 'Weekly Subscription'; price = '€170'; break;
+    case 'monthly': planLabel = 'Monthly Subscription'; price = '€400'; break;
+    case 'yearly': planLabel = 'Yearly Subscription'; price = '€1500'; break;
+    default: planLabel = 'Daily Subscription'; price = '€100';
+  }
+
+  mainContent.innerHTML = `
+  <div class="page-overlay">
+    <div class="page-content" style="max-width:500px;">
+      <h3>📋 Subscription Details</h3>
+      <p style="font-size:15px; line-height:1.7; color:#e2e8f0; margin-bottom:25px;">
+        Dear Customer, to enjoy our 100% guaranteed games, our <strong>${planLabel.toLowerCase()}</strong> is <strong style="color:#fbbf24;">${price}</strong>. 
+        Once you make payment, you will get access to our today’s games immediately and your winning is guaranteed.
+      </p>
+      <button class="green-btn" onclick="redirectToTelegram()" style="font-size:16px; padding:16px;">
+        GET STARTED NOW
+      </button>
+      <button onclick="contactAdmin()" class="link-btn" style="background:none;border:none;width:100%;margin-top:15px;">
+        ← Back to Subscriptions
+      </button>
+    </div>
+  </div>`;
+}
+
+function redirectToTelegram() {
+  window.open('https://t.me/Franklin_Fred', '_blank');
+}
+
+/* ============================================================
+   SUBSCRIBER LOGIN
+   ============================================================ */
+function subscriberLogin(){
+  mainContent.innerHTML = `
+  <div class="page-overlay">
+    <div class="page-content">
+      <h3>🔓 Unlock VIP Ticket</h3>
+      <p>Please input your subscriber ticket code to unlock today's VIP ticket.</p>
+      
+      <div class="input-group">
+        <label>Subscriber Ticket Code</label>
+        <input type="text" id="subCode" placeholder="Enter your ticket code">
+      </div>
+      
+      <button class="green-btn" onclick="checkSubscriber()">Unlock Ticket</button>
+      
+      <div style="margin-top:18px; text-align:center; font-size:13px; color:#94a3b8; line-height:1.6;">
+        If you don’t have a subscriber ticket code, please click 
+        <span style="color:#3b82f6; font-weight:600; cursor:pointer;" onclick="contactAdmin()">“Get Subscriber Code Now”</span> 
+        to get your code immediately from the Admin.
+      </div>
+      
+      <button onclick="contactAdmin()" class="green-btn" style="background:linear-gradient(90deg,#3b82f6,#8b5cf6); margin-top:10px;">
+        Get Subscriber Code Now
+      </button>
+      
+      <button onclick="switchTab('pending')" class="link-btn" style="background:none;border:none;width:100%;margin-top:15px;">← Back to Tickets</button>
+    </div>
+  </div>`;
+}
+
+async function checkSubscriber(){
+  const code = document.getElementById("subCode").value.trim();
+  if(!code){
+    alert("Please enter your subscriber code.");
+    return;
+  }
+  if(!secureVault.hasSubscriberCode()){
+    alert("No subscriber code has been set by the admin yet. Please contact the admin.");
+    return;
+  }
+  const ok = await secureVault.verifySubscriber(code);
+  if(ok){
+    isSubscriber = true;
+    alert("Login Successful! VIP Ticket Unlocked.");
+    renderPending();
+  } else {
+    alert("Invalid Subscriber Ticket Code. Please check and try again.");
+  }
+}
+
+/* ============================================================
+   PREMIUM ACCESS LOGIN (UPDATED)
+   ============================================================ */
+function openAdminLogin(){
+  const modal = document.createElement("div");
+  modal.className = "page-overlay";
+  modal.id = "adminModal";
+  modal.innerHTML = `
+    <div class="page-content" style="max-width:380px;">
+      <h3>👑 Premium Access</h3>
+      <div class="input-group">
+        <label>Enter your premium access code</label>
+        <input type="password" id="adminPassInput" placeholder="Enter premium access code">
+      </div>
+      <button id="adminSubmitBtn" class="green-btn" style="margin-top:5px;">Login</button>
+
+      <button class="secondary-btn" onclick="showPremiumContactOptions()">💬 Contact Admin</button>
+
+      <p style="margin-top:20px; text-align:center; font-size:13px; color:#94a3b8; line-height:1.7;">
+        Please contact admin for you to gain access as our premium VIP member.
+      </p>
+
+      <button onclick="closePremiumModal()" class="link-btn" style="background:none;border:none;width:100%;margin-top:15px;">← Back</button>
+    </div>`;
+  document.body.appendChild(modal);
+
+  const input = document.getElementById("adminPassInput");
+  const submit = document.getElementById("adminSubmitBtn");
+
+  submit.onclick = async function(){
+    const pass = input.value;
+    const ok = await secureVault.verifyAdmin(pass);
+    if(ok){
+      closePremiumModal();
+      alert("Premium Access Granted");
+      openAdminPanel();
+    } else {
+      alert("Wrong Password!");
+      input.value = "";
+      input.focus();
+    }
+  };
+  input.addEventListener("keydown", function(e){
+    if(e.key === "Enter") submit.click();
+  });
+  input.focus();
+}
+
+function closePremiumModal(){
+  const adminModal = document.getElementById("adminModal");
+  if(adminModal) adminModal.remove();
+  const contactModal = document.getElementById("premiumContactModal");
+  if(contactModal) contactModal.remove();
+  // Return to the tickets view (remove the modal overlay)
+  renderPending();
+}
+
+/* ============================================================
+   PREMIUM CONTACT OPTIONS (Gmail / Telegram)
+   ============================================================ */
+function showPremiumContactOptions(){
+  // Remove the existing admin modal if present
+  const existingModal = document.getElementById("adminModal");
+  if(existingModal) existingModal.remove();
+
+  const modal = document.createElement("div");
+  modal.className = "page-overlay";
+  modal.id = "premiumContactModal";
+  modal.innerHTML = `
+    <div class="page-content" style="max-width:400px;">
+      <h3>📩 Contact Admin</h3>
+      <p style="margin-bottom:20px;">Choose how you would like to reach our admin to gain premium access.</p>
+      
+      <a href="mailto:ipdfixedsupport@gmail.com?subject=Premium%20VIP%20Access%20Request&body=Hello%20Admin,%0A%0AI%20would%20like%20to%20gain%20premium%20VIP%20access.%20Please%20provide%20me%20with%20the%20access%20code." 
+         class="subscription-box" style="border-left:4px solid #ef4444; text-align:left; display:flex; align-items:center; gap:12px; padding:16px;">
+        <span style="font-size:22px;">📧</span>
+        <div>
+          <div style="font-weight:700; color:#f8fafc; font-size:14px;">Contact via Gmail</div>
+          <div style="font-size:12px; color:#94a3b8; font-weight:500;">ipdfixedsupport@gmail.com</div>
+        </div>
+      </a>
+      
+      <a href="https://t.me/Franklin_Fred" target="_blank"
+         class="subscription-box" style="border-left:4px solid #3b82f6; text-align:left; display:flex; align-items:center; gap:12px; padding:16px;">
+        <span style="font-size:22px;">✈️</span>
+        <div>
+          <div style="font-weight:700; color:#f8fafc; font-size:14px;">Message Admin on Telegram</div>
+          <div style="font-size:12px; color:#94a3b8; font-weight:500;">@Franklin_Fred</div>
+        </div>
+      </a>
+      
+      <button onclick="openAdminLogin()" class="link-btn" style="background:none;border:none;width:100%;margin-top:15px;">← Back to Premium Login</button>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+/* ============================================================
+   ADMIN PANEL
+   ============================================================ */
+function openAdminPanel(){
+  let html = `
+  <div class="section-header">
+    <h2>⚙️ Admin Settings</h2>
+    <button onclick="switchTab('pending')" style="background:#334155;color:#e2e8f0;border:none;padding:8px 16px;border-radius:8px;font-weight:600;cursor:pointer;">Exit Panel</button>
+  </div>
+  <div class="page-content" style="max-width:100%;background:transparent;border:none;box-shadow:none;padding:0;">
+    
+    <div class="admin-section-title">🔑 Subscriber Access Code</div>
+    <div style="margin-bottom:20px;">
+      <div class="code-display-box" style="margin-bottom:12px;">
+        <span style="font-family:'Inter',sans-serif; font-size:12px; color:#94a3b8; font-weight:600; background:transparent; border:none; padding:0; letter-spacing:0;">Status:</span>
+        <span id="currentSubCodeDisplay">${secureVault.hasSubscriberCode() ? '✅ Code is set' : '— not set —'}</span>
+      </div>
+      <div class="code-edit-wrapper">
+        <input type="text" id="newSubCodeInput" placeholder="Enter new subscriber code" style="flex:1; padding:12px; border-radius:8px; border:1px solid #334155; background:#0f172a; color:#f8fafc; font-size:13px;">
+        <button onclick="updateSubscriberCode()" class="green-btn" style="width:auto; margin:0; padding:12px 20px; font-size:13px;">Update Code</button>
+      </div>
+      <p style="font-size:11px; color:#64748b; text-align:left; margin-top:8px;">* The code is stored as a SHA-256 hash. Only the hash is saved — the plaintext code is never stored anywhere.</p>
+    </div>
+
+    <div class="admin-section-title">🖼️ Image Settings (Upload from your device)</div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:20px;">
+      <div class="file-upload-group">
+        <label>Hero Soccer Ball:</label>
+        <input type="file" id="heroBallUpload" accept="image/*" onchange="previewImage(event, 'heroPreview')">
+        <img id="heroPreview" class="preview-img" src="${heroBallData}" alt="Preview">
+      </div>
+      <div class="file-upload-group">
+        <label>Lock Icon (Shield):</label>
+        <input type="file" id="lockIconUpload" accept="image/*" onchange="previewImage(event, 'lockPreview')">
+        <img id="lockPreview" class="preview-img" src="${lockIconData}" alt="Preview">
+      </div>
+      <div class="file-upload-group">
+        <label>Header Player:</label>
+        <input type="file" id="headerPlayerUpload" accept="image/*" onchange="previewImage(event, 'playerPreview')">
+        <img id="playerPreview" class="preview-img" src="${headerPlayerData}" alt="Preview">
+      </div>
+      <div class="file-upload-group">
+        <label>Team Football Icon:</label>
+        <input type="file" id="teamIconUpload" accept="image/*" onchange="previewImage(event, 'teamPreview')">
+        <img id="teamPreview" class="preview-img" src="${teamIconData}" alt="Preview">
+      </div>
+    </div>
+
+    <div class="admin-section-title">Edit Today Tickets</div>
+    <div class="admin-grid">`;
+
+  pendingMatches.forEach((m,i)=>{
+    html += `
+      <input id="home${i}" value="${m.home}" placeholder="Home Team">
+      <input id="away${i}" value="${m.away}" placeholder="Away Team">
+      <input id="scorePending${i}" value="${m.score}" placeholder="Correct Score">
+      <input id="oddsPending${i}" value="${m.odds}" placeholder="Odds">
+    `;
+  });
+
+  html += `</div>
+    <div class="admin-section-title">Edit Past Tickets</div>
+    <div class="admin-grid">`;
+
+  pastMatches.forEach((m,i)=>{
+    html += `
+      <input id="match${i}" value="${m.match}" placeholder="Match">
+      <input id="score${i}" value="${m.score}" placeholder="Score">
+      <input id="oddsPast${i}" value="${m.odds}" placeholder="Odds">
+    `;
+  });
+
+  html += `</div>
+    <div class="admin-section-title">Edit Total Odds</div>
+    <div class="admin-grid">
+      <input id="todayTotalOdds" value="${todayOdds}" placeholder="Today Total Odds">
+      <input id="pastTotalOdds" value="${pastOdds}" placeholder="Past Total Odds">
+    </div>
+    <button class="green-btn" onclick="saveAdmin()" style="margin-top:25px;">💾 Save All Changes</button>
+  </div>`;
+
+  mainContent.innerHTML = html;
+}
+
+/* ============================================================
+   UPDATE SUBSCRIBER CODE
+   ============================================================ */
+async function updateSubscriberCode() {
+  const newCode = document.getElementById("newSubCodeInput").value.trim();
+  if (!newCode) {
+    alert("Please enter a valid subscriber code.");
+    return;
+  }
+  if (newCode.length < 4) {
+    alert("Subscriber code must be at least 4 characters long.");
+    return;
+  }
+  
+  await secureVault.setSubscriberCode(newCode);
+  document.getElementById("currentSubCodeDisplay").textContent = "✅ Code is set";
+  document.getElementById("newSubCodeInput").value = "";
+  alert("Subscriber code updated successfully!\n\nShare the code with your subscribers. Only the hash is stored.");
+}
+
+function previewImage(event, previewId) {
+  const file = event.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const preview = document.getElementById(previewId);
+      preview.src = e.target.result;
+      preview.classList.add("has-image");
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+async function saveAdmin(){
+  pendingMatches = pendingMatches.map((m,i)=>({
+    home:document.getElementById("home"+i).value,
+    away:document.getElementById("away"+i).value,
+    score:document.getElementById("scorePending"+i).value,
+    odds:document.getElementById("oddsPending"+i).value
+  }));
+  pastMatches = pastMatches.map((m,i)=>({
+    match:document.getElementById("match"+i).value,
+    score:document.getElementById("score"+i).value,
+    odds:document.getElementById("oddsPast"+i).value
+  }));
+  todayOdds = document.getElementById("todayTotalOdds").value;
+  pastOdds = document.getElementById("pastTotalOdds").value;
+
+  localStorage.setItem("todayOdds", todayOdds);
+  localStorage.setItem("pastOdds", pastOdds);
+  localStorage.setItem("pendingMatches",JSON.stringify(pendingMatches));
+  localStorage.setItem("pastMatches",JSON.stringify(pastMatches));
+
+  const heroFile = document.getElementById("heroBallUpload").files[0];
+  const lockFile = document.getElementById("lockIconUpload").files[0];
+  const playerFile = document.getElementById("headerPlayerUpload").files[0];
+  const teamFile = document.getElementById("teamIconUpload").files[0];
+
+  if (heroFile) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      heroBallData = e.target.result;
+      localStorage.setItem("heroBallData", heroBallData);
+      loadImages();
+    };
+    reader.readAsDataURL(heroFile);
+  }
+
+  if (lockFile) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      lockIconData = e.target.result;
+      localStorage.setItem("lockIconData", lockIconData);
+    };
+    reader.readAsDataURL(lockFile);
+  }
+
+  if (playerFile) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      headerPlayerData = e.target.result;
+      localStorage.setItem("headerPlayerData", headerPlayerData);
+      loadImages();
+    };
+    reader.readAsDataURL(playerFile);
+  }
+
+  if (teamFile) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      teamIconData = e.target.result;
+      localStorage.setItem("teamIconData", teamIconData);
+    };
+    reader.readAsDataURL(teamFile);
+  }
+
+  try {
+    await fetch(API_URL + "/1", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        pending: pendingMatches,
+        past: pastMatches,
+        todayOdds: todayOdds,
+        pastOdds: pastOdds
+      })
+    });
+    alert("Text changes saved to server! Images saved locally.");
+  } catch (err) {
+    alert("Saved locally.");
+    console.log(err);
+  }
+  
+  switchTab('pending');
+}
+
+/* ============================================================
+   SERVER LOAD
+   ============================================================ */
+async function loadFromServer(){
+  try {
+    const res = await fetch(API_URL + "/1");
+    const data = await res.json();
+    if(data){
+      pendingMatches = data.pending || pendingMatches;
+      pastMatches = data.past || pastMatches;
+      todayOdds = data.todayOdds || todayOdds;
+      pastOdds = data.pastOdds || pastOdds;
+      localStorage.setItem("todayOdds", todayOdds);
+      localStorage.setItem("pastOdds", pastOdds);
+      localStorage.setItem("pendingMatches", JSON.stringify(pendingMatches));
+      localStorage.setItem("pastMatches", JSON.stringify(pastMatches));
+    }
+    renderPending();
+  } catch (err){
+    console.log("Server load failed, using localStorage.");
+    renderPending();
+  }
+}
+
+loadFromServer();
+
+/* Expose functions */
+window.switchTab = switchTab;
+window.contactAdmin = contactAdmin;
+window.showSubscriptionDetail = showSubscriptionDetail;
+window.redirectToTelegram = redirectToTelegram;
+window.subscriberLogin = subscriberLogin;
+window.checkSubscriber = checkSubscriber;
+window.openAdminLogin = openAdminLogin;
+window.showPremiumContactOptions = showPremiumContactOptions;
+window.closePremiumModal = closePremiumModal;
+window.openAdminPanel = openAdminPanel;
+window.saveAdmin = saveAdmin;
+window.previewImage = previewImage;
+window.updateSubscriberCode = updateSubscriberCode;
+window.toggleButtons = toggleButtons;
+</script>
+</body>
+</html>

@@ -1,0 +1,141 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register | ForexPro Signals</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0c10 0%, #1a1f2e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .glass-card {
+            background: rgba(18, 22, 30, 0.95);
+            backdrop-filter: blur(12px);
+            border-radius: 32px;
+            border: 1px solid rgba(72, 187, 255, 0.3);
+            padding: 40px;
+            width: 100%;
+            max-width: 450px;
+        }
+        h1 { font-size: 32px; margin-bottom: 8px; background: linear-gradient(135deg, #1e88e5, #64b5f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .input-group { margin-bottom: 20px; }
+        input, select {
+            width: 100%;
+            padding: 14px 18px;
+            background: #1e2128;
+            border: 1px solid #334155;
+            border-radius: 16px;
+            color: #eef2ff;
+            font-size: 14px;
+        }
+        input:focus { outline: none; border-color: #1e88e5; }
+        .btn-primary {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #1e88e5, #0d47a1);
+            border: none;
+            border-radius: 16px;
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .links { margin-top: 20px; text-align: center; }
+        .links a { color: #64b5f6; text-decoration: none; font-size: 14px; }
+        .error { background: rgba(220,38,38,0.2); border: 1px solid #ef4444; padding: 12px; border-radius: 12px; margin-bottom: 20px; color: #fca5a5; }
+        .success { background: rgba(34,197,94,0.2); border: 1px solid #22c55e; padding: 12px; border-radius: 12px; margin-bottom: 20px; color: #86efac; }
+    </style>
+</head>
+<body>
+    <div class="glass-card">
+        <h1>Create Account</h1>
+        <p style="color: #94a3b8; margin-bottom: 30px;">Start your trading journey</p>
+        
+        <div id="messageDiv"></div>
+        
+        <div class="input-group">
+            <input type="text" id="fullName" placeholder="Full Name">
+        </div>
+        <div class="input-group">
+            <input type="email" id="email" placeholder="Email address">
+        </div>
+        <div class="input-group">
+            <input type="password" id="password" placeholder="Password (min 6 characters)">
+        </div>
+        <div class="input-group">
+            <input type="password" id="confirmPassword" placeholder="Confirm Password">
+        </div>
+        
+        <button class="btn-primary" id="registerBtn">Register</button>
+        
+        <div class="links">
+            <a href="login.html">Already have an account? Login</a>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyB2g2zMvPcN6fLqQdX5pJ7rWkYz8aBcDeF",
+            authDomain: "forexpro-signals.firebaseapp.com",
+            projectId: "forexpro-signals",
+            storageBucket: "forexpro-signals.appspot.com",
+            messagingSenderId: "123456789012",
+            appId: "1:123456789012:web:abc123def456"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        
+        document.getElementById('registerBtn').addEventListener('click', async () => {
+            const fullName = document.getElementById('fullName').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const messageDiv = document.getElementById('messageDiv');
+            
+            if (!fullName || !email || !password) {
+                messageDiv.innerHTML = '<div class="error">Please fill all fields</div>';
+                return;
+            }
+            if (password !== confirmPassword) {
+                messageDiv.innerHTML = '<div class="error">Passwords do not match</div>';
+                return;
+            }
+            if (password.length < 6) {
+                messageDiv.innerHTML = '<div class="error">Password must be at least 6 characters</div>';
+                return;
+            }
+            
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                await updateProfile(userCredential.user, { displayName: fullName });
+                await setDoc(doc(db, 'users', userCredential.user.uid), {
+                    fullName: fullName,
+                    email: email,
+                    createdAt: new Date().toISOString(),
+                    preferences: { theme: 'dark', defaultPair: 'EUR/USD' }
+                });
+                messageDiv.innerHTML = '<div class="success">Registration successful! Redirecting to login...</div>';
+                setTimeout(() => { window.location.href = 'login.html'; }, 1500);
+            } catch (error) {
+                let errorMsg = error.message;
+                if (error.code === 'auth/email-already-in-use') errorMsg = 'Email already registered.';
+                messageDiv.innerHTML = `<div class="error">${errorMsg}</div>`;
+            }
+        });
+    </script>
+</body>
+</html> -->

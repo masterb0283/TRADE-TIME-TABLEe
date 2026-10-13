@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIP Fixed Matches — Welcome</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #0a0a0a;
+        }
+
+        /* ===== BANNER ===== */
+        .banner {
+            position: relative;
+            width: 100%;
+            min-height: 100vh;
+            background: linear-gradient(to right, #0a0a0a 40%, rgba(10, 10, 10, 0.2) 100%),
+                        url('./messi.jpg') no-repeat center center;
+            background-size: cover;
+            background-position: center;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;   /* Centers content horizontally on all screens */
+        }
+
+        /* Dark overlay for text readability */
+        .banner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, 
+                        rgba(0,0,0,0.55) 0%, 
+                        rgba(0,0,0,0.85) 100%);
+            z-index: 1;
+        }
+
+        /* ===== CONTENT ===== */
+        .content {
+            position: relative;
+            z-index: 2;
+            padding: 40px 60px;
+            max-width: 780px;
+            width: 100%;
+            color: #fff;
+            text-align: center;   /* Center text on all screens */
+        }
+
+        .welcome-tag {
+            display: inline-block;
+            background: rgba(76, 175, 80, 0.15);
+            color: #4CAF50;
+            border: 1px solid rgba(76, 175, 80, 0.35);
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 18px;
+        }
+
+        h1 {
+            font-size: clamp(2.2rem, 5.5vw, 4.5rem);
+            line-height: 1.05;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .highlight {
+            color: #4CAF50;
+            display: block;
+        }
+
+        .sub-headline {
+            font-size: clamp(1rem, 1.6vw, 1.2rem);
+            color: #e2e8f0;
+            margin-top: 18px;
+            margin-bottom: 24px;
+            line-height: 1.6;
+            font-weight: 400;
+            max-width: 620px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .sub-headline strong {
+            color: #4CAF50;
+            font-weight: 700;
+        }
+
+        .features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px 24px;
+            margin-bottom: 32px;
+            justify-content: center;   /* Center feature items */
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.88rem;
+            color: #cbd5e1;
+            font-weight: 500;
+        }
+
+        .feature-item .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4CAF50;
+            flex-shrink: 0;
+            box-shadow: 0 0 8px rgba(76, 175, 80, 0.8);
+        }
+
+        /* ===== BUTTON ===== */
+        .cta-button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 16px 34px;
+            font-size: 1rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            letter-spacing: 1.5px;
+            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.35);
+        }
+
+        .cta-button:hover {
+            background-color: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(76, 175, 80, 0.5);
+        }
+
+        .cta-button svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        /* ===== RESPONSIVE (Tablets & Phones) ===== */
+        @media (max-width: 768px) {
+            .banner {
+                min-height: 100vh;
+                background-position: 70% center;
+            }
+
+            .content {
+                padding: 40px 25px;
+                max-width: 100%;
+            }
+
+            .cta-button {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* Small phones */
+        @media (max-width: 480px) {
+            .banner {
+                min-height: 95vh;
+            }
+
+            .sub-headline {
+                font-size: 0.95rem;
+            }
+
+            .feature-item {
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="banner">
+        <div class="content">
+            <div class="welcome-tag">● 100% Verified Source</div>
+
+            <h1>
+                Welcome Dear
+                <span class="highlight">Customer</span>
+            </h1>
+
+            <p class="sub-headline">
+                Here we offer <strong>100% guaranteed games</strong> because this is the source of all
+                <strong>Verified Fixed Matches</strong>. Your winning is our priority — access today's
+                confirmed games and win big with total confidence.
+            </p>
+
+            <div class="features">
+                <div class="feature-item"><span class="dot"></span> Guaranteed Wins</div>
+                <div class="feature-item"><span class="dot"></span> Verified Fixed Matches</div>
+                <div class="feature-item"><span class="dot"></span> Instant Access</div>
+                <div class="feature-item"><span class="dot"></span> Trusted by Thousands</div>
+            </div>
+
+            <button class="cta-button" id="ticketBtn">
+                <svg viewBox="0 0 24 24">
+                    <path d="M22 10V6c0-1.11-.9-2-2-2H4c-1.1 0-1.99.89-1.99 2v4c1.1 0 1.99.9 1.99 2s-.89 2-2 2v4c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-4c-1.1 0-2-.9-2-2s.9-2 2-2zm-9 7.5h-2v-2h2v2zm0-4.5h-2v-2h2v2zm0-4.5h-2v-2h2v2z"/>
+                </svg>
+                Get Started Now
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('ticketBtn').addEventListener('click', function() {
+            window.location.href = 'home.html';
+        });
+    </script>
+
+</body>
+</html>

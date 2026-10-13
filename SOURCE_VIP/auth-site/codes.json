@@ -1,0 +1,17 @@
+[
+  2121,
+  {
+    "code": "384C5B-6F7561",
+    "name": "",
+    "active": true,
+    "deviceId": null,
+    "token": null,
+    "created": "2026-10-10T14:32:06.917Z",
+    "lastLogin": "2026-10-12T20:24:59.238Z",
+    "firstIp": null,
+    "lastIp": null,
+    "device": null,
+    "loginCount": 0,
+    "lastBlocked": null
+  }
+]

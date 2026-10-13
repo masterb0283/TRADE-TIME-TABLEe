@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>INSIDE LIFE | Live News & Trends from World</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
+    }
+
+    body {
+      background: #f5f7fb;
+      color: #1e2a3e;
+      line-height: 1.5;
+    }
+
+    /* Header & Navigation */
+    .top-bar {
+      background: linear-gradient(135deg, #008751 0%, #00663d 100%);
+      color: white;
+      padding: 1rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+
+    .logo-area {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .logo h1 {
+      font-size: 1.9rem;
+      letter-spacing: -0.5px;
+      font-weight: 700;
+      display: inline;
+    }
+
+    .logo span {
+      font-weight: 400;
+      font-size: 0.9rem;
+      background: rgba(255,255,240,0.25);
+      padding: 0.2rem 0.8rem;
+      border-radius: 40px;
+      margin-left: 0.75rem;
+    }
+
+    .live-badge {
+      background: #e11d48;
+      padding: 0.3rem 1rem;
+      border-radius: 60px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 0 6px rgba(0,0,0,0.2);
+    }
+
+    .live-badge::before {
+      content: '';
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      background: white;
+      border-radius: 50%;
+      animation: pulse 1.2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; transform: scale(1); background: #fff;}
+      50% { opacity: 0.6; transform: scale(1.2); background: #ffcc00;}
+      100% { opacity: 1; transform: scale(1); background: #fff;}
+    }
+
+    /* category tabs */
+    .category-nav {
+      background: white;
+      padding: 0.8rem 1rem;
+      border-bottom: 1px solid #e2e8f0;
+      overflow-x: auto;
+      white-space: nowrap;
+      scrollbar-width: thin;
+      position: sticky;
+      top: 85px;
+      background: #ffffffdd;
+      backdrop-filter: blur(8px);
+      z-index: 99;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    }
+
+    .cat-list {
+      display: inline-flex;
+      gap: 0.8rem;
+      list-style: none;
+      padding: 0 1rem;
+    }
+
+    .cat-btn {
+      background: transparent;
+      border: none;
+      padding: 0.5rem 1.2rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+      border-radius: 40px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: #2c3e50;
+    }
+
+    .cat-btn:hover {
+      background: #e9ecef;
+    }
+
+    .cat-btn.active {
+      background: #008751;
+      color: white;
+      box-shadow: 0 2px 8px rgba(0,135,81,0.3);
+    }
+
+    /* main container */
+    .container {
+      max-width: 1300px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+      
+    }
+
+    /* breaking news ticker */
+    .breaking-wrapper {
+      background: #1e293b;
+      color: #facc15;
+      border-radius: 48px;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    .breaking-label {
+      background: #dc2626;
+      padding: 0.6rem 1.5rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      font-size: 0.9rem;
+      color: white;
+      border-radius: 48px 0 0 48px;
+    }
+
+    .ticker {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      position: relative;
+      padding: 0.7rem 0;
+    }
+
+    .ticker-content {
+      display: inline-block;
+      white-space: nowrap;
+      animation: scrollTicker 28s linear infinite;
+      padding-left: 100%;
+      font-weight: 500;
+      color: #fef9c3;
+    }
+
+    .ticker-content span {
+      margin-right: 2.5rem;
+    }
+
+    @keyframes scrollTicker {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-100%); }
+    }
+
+    /* news grid */
+    .news-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.8rem;
+    }
+
+    .news-card {
+      background: white;
+      border-radius: 1.2rem;
+      overflow: hidden;
+      transition: all 0.25s ease;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+      border: 1px solid rgba(0,0,0,0.03);
+    }
+
+    .news-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 25px -12px rgba(0,0,0,0.15);
+    }
+
+    .card-img {
+      height: 180px;
+      background: #cbd5e1;
+      background-size: cover;
+      background-position: center;
+      position: relative;
+    }
+
+    .category-tag {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background: #000000aa;
+      backdrop-filter: blur(4px);
+      color: white;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 30px;
+      text-transform: uppercase;
+    }
+
+    .card-content {
+      padding: 1.2rem 1.2rem 1.5rem;
+      flex: 1;
+    }
+
+    .card-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 0.6rem;
+      line-height: 1.4;
+    }
+
+    .copy-btn {
+  margin-top: 10px;
+  padding: 0.4rem 0.8rem;
+  border: none;
+  border-radius: 20px;
+  background: #008751;
+  color: white;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.copy-btn:hover {
+  background: #00663d;
+  transform: scale(1.05);
+}
+
+.download-btn{
+  position:absolute;
+  bottom:10px;
+  right:10px;
+  border:none;
+  background:#008751;
+  color:white;
+  padding:6px 12px;
+  border-radius:20px;
+  cursor:pointer;
+  font-size:12px;
+  font-weight:600;
+  z-index:10;
+}
+
+.download-btn:hover{
+  background:#00663d;
+}
+
+    .card-desc {
+      color: #475569;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .meta-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: #6c757d;
+      border-top: 1px solid #edf2f7;
+      padding-top: 0.8rem;
+      margin-top: auto;
+    }
+
+    /* loader & error */
+    .loader {
+      display: flex;
+      justify-content: center;
+      padding: 4rem;
+    }
+
+    .spinner {
+      width: 45px;
+      height: 45px;
+      border: 4px solid #e2e8f0;
+      border-top: 4px solid #008751;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .error-msg {
+      text-align: center;
+      background: #fee2e2;
+      color: #991b1b;
+      padding: 2rem;
+      border-radius: 2rem;
+      font-weight: 500;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 3.5rem;
+      padding: 1.5rem;
+      background: #f1f5f9;
+      font-size: 0.8rem;
+      color: #334155;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    @media (max-width: 640px) {
+      .container {
+        padding: 0 1rem;
+      }
+      .logo h1 { font-size: 1.4rem; }
+      .cat-btn { padding: 0.4rem 0.9rem; font-size: 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="logo-area">
+    <div class="logo">
+      <h1>INSIDE<span>LIFE</span></h1>
+      <div style="font-size: 0.7rem; opacity: 0.9;">🇳🇬 Breaking &amp; Trending 24/7</div>
+    </div>
+    <div class="live-badge">LIVE • Real-time Life Info</div>
+  </div>
+</div>
+
+<div class="category-nav">
+  <div class="cat-list" id="categoryTabs">
+    <button class="cat-btn active" data-cat="all">🔥 All News</button>
+    <button class="cat-btn" data-cat="sports">⚽ Sports</button>
+    <button class="cat-btn" data-cat="politics">🏛️ Politics</button>
+    <button class="cat-btn" data-cat="entertainment">🎬 Music/Movies</button>
+    <button class="cat-btn" data-cat="celebrities">✨ Celebrities</button>
+    <button class="cat-btn" data-cat="education">📚 Schools/Info</button>
+    <button class="cat-btn" data-cat="general">📰 General News</button>
+  </div>
+</div>
+
+<div class="container">
+  <!-- Breaking news ticker (dynamic) -->
+  <div class="breaking-wrapper">
+    <div class="breaking-label">⚡ BREAKING</div>
+    <div class="ticker" id="tickerContainer">
+      <div class="ticker-content" id="tickerText">Loading latest headlines...</div>
+    </div>
+    <div style="display:flex; justify-content:flex-end; margin-bottom:1rem;">
+  <button id="updateBtn" style="
+    background:#008751;
+    color:white;
+    border:none;
+    padding:0.6rem 1.2rem;
+    border-radius:30px;
+    font-weight:600;
+    cursor:pointer;
+    box-shadow:0 4px 10px rgba(0,0,0,0.1);
+  ">
+    🔄 Update News
+  </button>
+</div>
+  </div>
+
+  <!-- News grid output -->
+  <div id="newsGridContainer" class="news-grid">
+    <div class="loader"><div class="spinner"></div></div>
+  </div>
+</div>
+
+<footer>
+  <p>🇳🇬 NaijaNow — Aggregating real-time news from Nigeria: sports, politics, music, schools, celebs & more. Updated live.</p>
+  <p style="margin-top: 8px;">⚡ "As it breaks, as you see" — Instant Nigerian pulse ⚡</p>
+</footer>
+
+<script>
+  // --------------------------------------------------------------
+  // MOCK but REALISTIC NIGERIAN NEWS API SIMULATOR (dynamic + time-aware)
+  // In a real production, you'd connect to a news API. For this prompt:
+  // We simulate constantly refreshing news data using a local generator
+  // that mimics "immediately as it's carried out" with fresh timestamp & diverse categories.
+  // We also allow real-time change every ~45 seconds to reflect live updates.
+  // --------------------------------------------------------------
+
+  // ---- Master News Database (themed for Nigeria, every category)
+  const NEWS_API_KEY = "da0a9e0f549145d68bc948342e031acd";
+const GNEWS_API_KEY = "pub_c03a571d8d28487589bcf98980db17e1";
+// const NEWSDATA_API_KEY = "https://newsdata.io?utm_source=chatgpt.com";
+
+  async function fetchNewsAPI() {
+  const res = await fetch(
+    `https://newsapi.org/v2/everything?q=Nigeria&sortBy=publishedAt&pageSize=50&apiKey=${NEWS_API_KEY}`
+  );
+
+  const data = await res.json();
+
+  return (data.articles || []).map(article => ({
+    title: article.title,
+    desc: article.description || "",
+   category: detectCategory(article.title),
+    image: article.urlToImage,
+    source: article.source?.name,
+    url: article.url,
+   timestampRaw: article.publishedAt ? new Date(article.publishedAt).getTime() : Date.now()
+  }));
+}
+
+  // Helper: background image placeholders based on category (dynamic unsplash style)
+  function getCardImage(category) {
+    const images = {
+      sports: "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=600&h=400&fit=crop",
+      politics: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=600&h=400&fit=crop",
+      entertainment: "https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?w=600&h=400&fit=crop",
+      celebrities: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=600&h=400&fit=crop",
+      education: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600&h=400&fit=crop",
+      general: "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=600&h=400&fit=crop",
+      default: "https://images.unsplash.com/photo-1584278860047-22db0f8d7f2d?w=600&h=400&fit=crop"
+    };
+    return images[category] || images.default;
+  }
+
+  async function fetchGNews() {
+  const res = await fetch(
+    `https://gnews.io/api/v4/search?q=Nigeria&lang=en&country=ng&max=50&apikey=${GNEWS_API_KEY}`
+  );
+
+  const data = await res.json();
+
+  return (data.articles || []).map(article => ({
+    title: article.title,
+    desc: article.description || "",
+    category: detectCategory(article.title),
+    image: article.image,
+    source: article.source?.name,
+    url: article.url,
+    timestampRaw: new Date(article.publishedAt).getTime()
+  }));
+}
+
+
+async function loadLiveNews() {
+
+  document.getElementById('newsGridContainer').innerHTML = `
+    <div class="loader">
+      <div class="spinner"></div>
+    </div>
+  `;
+  if (window.isLoadingNews) return;
+window.isLoadingNews = true;
+
+
+  try {
+   const newsapi = await fetchNewsAPI().catch(() => []);
+const gnews = await fetchGNews().catch(() => []);
+window.isLoadingNews = false;
+
+    const combined = [
+  ...newsapi,
+  ...gnews
+];
+
+if (!newsapi.length && !gnews.length) {
+  document.getElementById('newsGridContainer').innerHTML = `
+    <div class="error-msg">
+      ⚠️ No news loaded. Check internet connection and try again.
+    </div>
+  `;
+  return;
+}
+
+    const unique = combined.filter(
+  (article, index, self) =>
+    index === self.findIndex(
+      a => a.title.toLowerCase() === article.title.toLowerCase()
+    ) 
+);
+
+    masterNews = unique.sort(
+      (a, b) => b.timestampRaw - a.timestampRaw
+    );
+
+    renderNews();
+
+  } catch (error) {
+
+  console.error(error);
+
+  document.getElementById('newsGridContainer').innerHTML = `
+    <div class="error-msg">
+      ⚠️ Unable to load live Nigerian news.
+      Check your API keys or internet connection.
+    </div>
+  `;
+}
+}
+
+function cleanSummary(text) {
+  if (!text) return "No summary available.";
+
+  return text.length > 140
+    ? text.substring(0, 140) + "..."
+    : text;
+}
+
+  // function to enrich news with random timestamps "X secs/min ago" for realism
+  function getTimeAgo(minutesAgo) {
+    if (minutesAgo < 1) return "just now";
+    if (minutesAgo === 1) return "1 minute ago";
+    if (minutesAgo < 60) return `${minutesAgo} minutes ago`;
+    const hours = Math.floor(minutesAgo / 60);
+    if (hours === 1) return "1 hour ago";
+    return `${hours} hours ago`;
+  }
+
+  // Refresh dynamic timestamps for live feel
+ function updateTimestamps(newsArray) {
+  return newsArray.map(item => {
+    const published = item.timestampRaw || Date.now();
+    let elapsed = Math.floor((Date.now() - published) / 60000);
+
+    if (elapsed < 1) return { ...item, timestamp: "just now" };
+    if (elapsed === 1) return { ...item, timestamp: "1 minute ago" };
+    if (elapsed < 60) return { ...item, timestamp: `${elapsed} minutes ago` };
+
+    const hours = Math.floor(elapsed / 60);
+    if (hours === 1) return { ...item, timestamp: "1 hour ago" };
+
+    return { ...item, timestamp: `${hours} hours ago` };
+  });
+}
+
+ let masterNews = [];
+
+  // ADDITION: simulate fresh breaking news entry every 60 seconds? We'll regenerate dynamic story order + add one "new" story occasionally
+  let liveUpdateInterval;
+  let breakingHeadlinesList = [];
+
+  function generateBreakingHeadlines() {
+    const headlines = masterNews.slice(0, 6).map(n => `🔴 ${n.title} • ${n.timestamp}`).join('   ⚡   ');
+    return headlines || "🇳🇬 Breaking: Presidential address imminent • Fuel price update • Super Eagles camp opens";
+  }
+
+  function updateBreakingTicker() {
+    const tickerEl = document.getElementById('tickerText');
+    if (tickerEl) {
+      tickerEl.innerHTML = generateBreakingHeadlines();
+    }
+  }
+
+  // main render function with category filter
+  let currentCategory = "all";
+
+  function renderNews() {
+    const container = document.getElementById('newsGridContainer');
+    if (!container) return;
+
+    // update timestamps to simulate "as it is carried out immediately"
+    let freshNews = updateTimestamps([...masterNews]);
+    // sort by timestampRaw (newest first)
+    freshNews.sort((a,b) => b.timestampRaw - a.timestampRaw);
+
+    let filtered = freshNews;
+    if (currentCategory !== "all") {
+      filtered = freshNews.filter(item => item.category === currentCategory);
+    }
+
+    if (filtered.length === 0) {
+      container.innerHTML = `<div class="error-msg">📭 No news in this category right now. Check back soon, Nigeria is buzzing! 🇳🇬</div>`;
+      return;
+    }
+
+    const cardsHTML = filtered.map(article => {
+      const imgUrl =
+  article.image ||
+  getCardImage(article.category);
+      let catDisplay = article.category;
+      if (catDisplay === 'entertainment') catDisplay = '🎵 Music/Movies';
+      else if (catDisplay === 'celebrities') catDisplay = '✨ Celebrities';
+      else if (catDisplay === 'education') catDisplay = '📚 School/Info';
+      else if (catDisplay === 'politics') catDisplay = '🏛️ Politics';
+      else if (catDisplay === 'sports') catDisplay = '⚽ Sports';
+      else if (catDisplay === 'general') catDisplay = '📰 General';
+      else catDisplay = catDisplay.toUpperCase();
+return `
+<div class="news-card">
+
+  <div class="card-img"
+       style="background-image:url('${imgUrl}')">
+
+    <span class="category-tag">${catDisplay}</span>
+
+    <button class="download-btn"
+            onclick="downloadImage('${imgUrl}')">
+      ⬇ Download
+    </button>
+
+  </div>
+
+  <div class="card-content">
+
+   
+   <div class="card-title">
+     📰 ${article.title}
+   </div>
+
+   <div class="card-desc">
+     ${cleanSummary(article.desc)}
+   </div>
+
+   <div class="meta-info">
+      <span>⏱️ ${article.timestamp}</span>
+      <span>${article.source || "News Source"}</span>
+   </div>
+
+   <!-- COPY BUTTON -->
+   <button class="copy-btn"
+     onclick="copyNews('${encodeURIComponent(article.title)}','${encodeURIComponent(article.url)}')">
+     📋 Copy
+   </button>
+
+  </div>
+</div>
+`;
+    }).join('');
+
+    container.innerHTML = cardsHTML;
+    updateBreakingTicker();
+  }
+
+
+  function detectCategory(title) {
+  const text = title.toLowerCase();
+
+  if (text.includes("football") ||
+      text.includes("super eagles") ||
+      text.includes("npfl"))
+    return "sports";
+
+  if (text.includes("senate") ||
+      text.includes("president") ||
+      text.includes("tinubu"))
+    return "politics";
+
+  if (text.includes("burna") ||
+      text.includes("davido") ||
+      text.includes("wizkid"))
+    return "entertainment";
+
+  if (text.includes("waec") ||
+      text.includes("jamb") ||
+      text.includes("university"))
+    return "education";
+
+  return "general";
+}
+  loadLiveNews();
+
+setInterval(() => {
+  loadLiveNews();
+}, 60000);
+
+  // Category switching
+  function attachCategoryListeners() {
+    const btns = document.querySelectorAll('.cat-btn');
+    btns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const cat = btn.getAttribute('data-cat');
+        currentCategory = cat;
+        btns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderNews();
+      });
+    });
+  }
+  function copyNews(title, url) {
+  const text = `${decodeURIComponent(title)}\n${decodeURIComponent(url)}`;
+
+  navigator.clipboard.writeText(text)
+    .then(() => {
+      alert("News copied to clipboard ✅");
+    })
+    .catch(() => {
+      alert("Failed to copy ❌");
+    });
+}
+function downloadImage(url) {
+  window.open(url, "_blank");
+
+}
+  document.getElementById("updateBtn").addEventListener("click", async () => {
+  const btn = document.getElementById("updateBtn");
+
+  btn.disabled = true;
+  btn.innerText = "⏳ Updating...";
+
+  await loadLiveNews();
+
+  btn.disabled = false;
+  btn.innerText = "🔄 Update News";
+});
+
+function downloadImage(url) {
+  const a = document.createElement("a");
+  a.href = url;
+  a.target = "_blank";
+  a.rel = "noopener";
+  a.click();
+}
+ 
+
+  window.addEventListener('DOMContentLoaded', () => {
+  attachCategoryListeners();
+
+  loadLiveNews();
+  
+// window.addEventListener('DOMContentLoaded', () => {
+ setInterval(() => renderNews(), 60000);
+
+  setInterval(() => updateBreakingTicker(), 10000);
+});
+</script>
+</body>
+</html>

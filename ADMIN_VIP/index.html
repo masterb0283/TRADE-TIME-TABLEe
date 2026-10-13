@@ -35,25 +35,14 @@ body{
 
 /* ===== HEADER ===== */
 .header{
-  padding:20px;
-  text-align:center;
-  font-weight:800;
-  font-size:18px;
-  letter-spacing:2px;
-  text-transform:uppercase;
-  color:black;
-
-  background:linear-gradient(
-    90deg,
-    #c5a100,
-    #f9e27d,
-    #d4af37,
-    #f9e27d,
-    #c5a100
-  );
-
-  box-shadow:0 6px 20px rgba(212,175,55,0.6);
+  height:180px;
+  background-image:url("./header.jpeg");
+  background-size:cover;
+  background-position:center;
+  background-repeat:no-repeat;
+  border-bottom:4px solid #d4af37;
 }
+
 .country{
   font-size:12px;
   font-weight:500;
@@ -332,12 +321,7 @@ input:focus{
 
 <div class="app">
 
-<div class="header">
-  ΔΙΑΧΕΙΡΙΣΗ ΠΗΓΗΣ ΔΙΑΧΕΙΡΙΣΤΗ FIXED MATCH
-  <div class="country">
-  <img src="https://flagcdn.com/w20/gr.png" class="flag">
-</div>
-</div>
+<div class="header"></div>
 
 <div class="tabs">
   <div class="tab active" onclick="switchTab('pending')">Σημερινό VIP Εισιτήριο</div>
@@ -360,9 +344,9 @@ input:focus{
 
 <script>
 
-const ADMIN_PASSWORD="7777777";
-const SUBSCRIBER_PASSWORD="VIP7777777";
-const API_URL = "https://69a528e5885dcb6bd6a77901.mockapi.io/todo";
+const ADMIN_PASSWORD="DANJUMA";
+const SUBSCRIBER_PASSWORD="DANJUMA";
+const API_URL = "https://69a7d5e82cd1d0552691b844.mockapi.io/Subscriber";
 
 let todayOdds = localStorage.getItem("todayOdds") || "15.2";
 let pastOdds = localStorage.getItem("pastOdds") || "15.2";
@@ -452,9 +436,12 @@ ${isSubscriber
    <span class="lock" onclick="contactAdmin()">🔒</span>`}
 <br>
 <span style="font-size:14px;color:#16a34a;">
-ΑΠΟΔΟΣΕΙΣ  - ${match.odds}
+ΑΠΟΔΟΣΕΙΣ - 
+${isSubscriber 
+  ? match.odds 
+  : `<span class="lock" onclick="contactAdmin()">🔒</span>`
+}
 </span>
-</div>
 
 <div class="event-footer">
 <span>Σημερινό Εισιτήριο</span>
@@ -528,10 +515,10 @@ eventsDiv.innerHTML=`
     <div style="margin-top:15px;">
       <p style="font-weight:600;margin-bottom:6px;">Διαθέσιμες Συνδρομές:</p>
 
-      <a href="https://t.me/Franklin_Fred" target="_blank" class="subscription-box">⚡ ΗΜΕΡΗΣΙΑ ΣΥΝΔΡΟΜΗ</a>
-      <a href="https://t.me/Franklin_Fred" target="_blank" class="subscription-box">🔥 ΕΒΔΟΜΑΔΙΑΙΑ ΣΥΝΔΡΟΜΗ</a>
-      <a href="https://t.me/Franklin_Fred" target="_blank" class="subscription-box">💎 ΜΗΝΙΑΙΑ ΣΥΝΔΡΟΜΗ</a>
-      <a href="https://t.me/Franklin_Fred" target="_blank" class="subscription-box">👑 ΕΤΗΣΙΑ ΣΥΝΔΡΟΜΗ</a>
+      <a href="https://t.me/Christos_Fixed" target="_blank" class="subscription-box">⚡ ΗΜΕΡΗΣΙΑ ΣΥΝΔΡΟΜΗ</a>
+      <a href="https://t.me/Christos_Fixed" target="_blank" class="subscription-box">🔥 ΕΒΔΟΜΑΔΙΑΙΑ ΣΥΝΔΡΟΜΗ</a>
+      <a href="https://t.me/Christos_Fixed" target="_blank" class="subscription-box">💎 ΜΗΝΙΑΙΑ ΣΥΝΔΡΟΜΗ</a>
+      <a href="https://t.me/Christos_Fixed" target="_blank" class="subscription-box">👑 ΕΤΗΣΙΑ ΣΥΝΔΡΟΜΗ</a>
     </div>
 
     <div style="margin-top:15px;">
@@ -541,11 +528,11 @@ eventsDiv.innerHTML=`
     </div>
 
     <div style="margin-top:15px;font-size:18px;">
-      <p><b>Telegram Διαχειριστή:</b> @Franklin_Fred</p>
-      <p><b>Email Διαχειριστή:</b> ipdfixedmatchmanagement@gmail.com</p>
+      <p><b>Telegram Διαχειριστή:</b> @Christos_Fixed</p>
+      <p><b>Email Διαχειριστή:</b> fixedmatchsourcem@gmail.com </p>
     </div>
 
-    <a href="https://t.me/Franklin_Fred" target="_blank"
+    <a href="https://t.me/Christos_Fixed" target="_blank"
        class="green-btn"
        style="display:block;text-align:center;text-decoration:none;margin-top:15px;">
       ΠΑΤΗΣΤΕ ΕΔΩ ΓΙΑ ΑΠΕΥΘΕΙΑΣ ΜΗΝΥΜΑ

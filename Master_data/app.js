@@ -1,0 +1,858 @@
+document.getElementById('yearNow').textContent = new Date().getFullYear();
+
+/* ================= STORAGE LAYER ================= */
+async function storageGet(key){ try{ const r = await window.storage.get(key,false); return r ? JSON.parse(r.value) : null; } catch(e){ return null; } }
+async function storageSet(key,val){ try{ await window.storage.set(key, JSON.stringify(val), false); return true; } catch(e){ console.error('storage.set failed',e); return false; } }
+
+/* ================= CATALOG DATA (modeled on real Nigerian VTU pricing tiers) ================= */
+const NETWORKS = ['MTN','Airtel','Glo','9mobile'];
+const NETWORK_COLOR = { MTN:'var(--mtn)', Airtel:'var(--airtel)', Glo:'var(--glo)', '9mobile':'var(--ninemobile)' };
+const NETWORK_TEXT  = { MTN:'var(--mtn-ink)', Airtel:'#fff', Glo:'#fff', '9mobile':'#fff' };
+const NETWORK_SLUG  = { mtn:'MTN', airtel:'Airtel', glo:'Glo', '9mobile':'9mobile' };
+
+const DEFAULT_PLANS = [
+  // MTN
+  {id:101,network:'MTN',size:'500MB',price:400,validity:'30 days'},
+  {id:102,network:'MTN',size:'1GB',price:550,validity:'30 days'},
+  {id:103,network:'MTN',size:'2GB',price:1100,validity:'30 days'},
+  {id:104,network:'MTN',size:'3GB',price:1600,validity:'30 days'},
+  {id:105,network:'MTN',size:'5GB',price:2300,validity:'30 days'},
+  {id:106,network:'MTN',size:'10GB',price:4485,validity:'30 days'},
+  {id:107,network:'MTN',size:'12.5GB',price:5485,validity:'30 days'},
+  // Airtel
+  {id:201,network:'Airtel',size:'500MB',price:390,validity:'30 days'},
+  {id:202,network:'Airtel',size:'1GB',price:530,validity:'30 days'},
+  {id:203,network:'Airtel',size:'2GB',price:1050,validity:'30 days'},
+  {id:204,network:'Airtel',size:'4GB',price:1900,validity:'30 days'},
+  {id:205,network:'Airtel',size:'10GB',price:4300,validity:'30 days'},
+  {id:206,network:'Airtel',size:'15GB',price:5900,validity:'30 days'},
+  // Glo
+  {id:301,network:'Glo',size:'1.5GB',price:500,validity:'30 days'},
+  {id:302,network:'Glo',size:'2.9GB',price:1000,validity:'30 days'},
+  {id:303,network:'Glo',size:'5.8GB',price:2000,validity:'30 days'},
+  {id:304,network:'Glo',size:'10GB',price:3000,validity:'30 days'},
+  {id:305,network:'Glo',size:'18GB',price:5000,validity:'30 days'},
+  // 9mobile
+  {id:401,network:'9mobile',size:'500MB',price:350,validity:'30 days'},
+  {id:402,network:'9mobile',size:'1.5GB',price:750,validity:'30 days'},
+  {id:403,network:'9mobile',size:'2GB',price:900,validity:'30 days'},
+  {id:404,network:'9mobile',size:'4.5GB',price:1900,validity:'30 days'},
+  {id:405,network:'9mobile',size:'11GB',price:3500,validity:'30 days'}
+];
+const NETWORK_PREFIXES = {
+  MTN:['0803','0806','0813','0814','0816','0810','0903','0906','0913','0916'],
+  Airtel:['0802','0808','0812','0701','0902','0901','0904','0907','0912'],
+  Glo:['0805','0807','0811','0815','0905','0915'],
+  '9mobile':['0809','0817','0818','0908','0909']
+};
+const FAQS = [
+  ['How do I pay for my order?', 'You pay from your Recharge9ja wallet balance. Fund your wallet from your dashboard, then check out any time.'],
+  ['How long does delivery take?', 'Every order is delivered instantly once checkout is confirmed.'],
+  ['Can I buy for someone else\u2019s number?', 'Yes. Just enter the beneficiary\u2019s phone number when you add an item to your cart.'],
+  ['Can I resell your services?', 'Yes, sign up and look out for the Reseller programme on your dashboard.']
+];
+
+let users=[], transactions=[], dataPlans=[], cart=[], currentUser=null, isDark=false;
+
+async function loadAllData(){
+  const [u,t,p,s,theme] = await Promise.all([
+    storageGet('app:users'), storageGet('app:transactions'), storageGet('app:dataplans'), storageGet('app:session'), storageGet('app:theme')
+  ]);
+  users = u || [];
+  transactions = t || [];
+  dataPlans = p || DEFAULT_PLANS;
+  if(!p) await storageSet('app:dataplans', dataPlans);
+  if(s && s.email){ currentUser = users.find(x=>x.email===s.email) || null; }
+  isDark = theme==='dark';
+  document.body.classList.toggle('dark', isDark);
+  const cartKey = currentUser ? 'app:cart:'+currentUser.id : 'app:cart:guest';
+  cart = (await storageGet(cartKey)) || [];
+}
+async function persistUsers(){ await storageSet('app:users', users); }
+async function persistTxns(){ await storageSet('app:transactions', transactions); }
+async function persistPlans(){ await storageSet('app:dataplans', dataPlans); }
+async function persistSession(){ await storageSet('app:session', currentUser ? {email: currentUser.email} : null); }
+async function persistCart(){ const key = currentUser ? 'app:cart:'+currentUser.id : 'app:cart:guest'; await storageSet(key, cart); updateCartBadge(); }
+async function toggleTheme(){ isDark=!isDark; document.body.classList.toggle('dark', isDark); await storageSet('app:theme', isDark?'dark':'light'); }
+
+/* ================= HELPERS ================= */
+function naira(n){ return '₦' + Number(n).toLocaleString('en-NG'); }
+function initials(name){ return name.split(' ').filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join(''); }
+function toast(msg, type='success'){
+  const el = document.createElement('div');
+  el.className = 'toast' + (type==='error' ? ' error' : '');
+  el.innerHTML = `<i class="fas ${type==='error'?'fa-circle-exclamation':'fa-circle-check'}" style="color:${type==='error'?'var(--danger)':'var(--naira)'}"></i><span>${msg}</span>`;
+  document.getElementById('toastStack').appendChild(el);
+  setTimeout(()=>el.remove(), 4200);
+}
+function openModal(html){
+  document.getElementById('modalBox').innerHTML = `<button class="modal-close" onclick="closeModal()"><i class="fas fa-xmark"></i></button>${html}`;
+  document.getElementById('modalBackdrop').classList.add('open');
+}
+function closeModal(){ document.getElementById('modalBackdrop').classList.remove('open'); }
+document.getElementById('modalBackdrop').addEventListener('click', e=>{ if(e.target.id==='modalBackdrop') closeModal(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
+
+function isValidEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+function isValidPhone(v){ return /^0\d{10}$/.test(v); }
+function detectNetwork(phone){
+  if(!phone || phone.length<4) return null;
+  const p4 = phone.slice(0,4);
+  for(const [net, prefixes] of Object.entries(NETWORK_PREFIXES)){ if(prefixes.includes(p4)) return net; }
+  return null;
+}
+function sanitizePhoneInput(e){ const cleaned = e.target.value.replace(/\D/g,'').slice(0,11); if(cleaned!==e.target.value) e.target.value=cleaned; }
+function withSpinner(btn, label){ btn.dataset.originalHtml = btn.innerHTML; btn.disabled = true; btn.innerHTML = `<span class="spinner"></span> ${label||'Processing…'}`; }
+function clearSpinner(btn){ btn.disabled=false; if(btn.dataset.originalHtml) btn.innerHTML = btn.dataset.originalHtml; }
+function simulateDelay(ms=700){ return new Promise(res=>setTimeout(res, ms)); }
+function refCode(){ return 'REF' + Math.random().toString(36).substring(2,8).toUpperCase(); }
+function txnId(){ return 'TXN' + Date.now().toString(36).toUpperCase(); }
+function lineId(){ return 'L'+Date.now().toString(36)+Math.random().toString(36).slice(2,5); }
+function countUp(el, target, prefix='₦'){
+  const dur=650; const start=performance.now();
+  function tick(now){ const p=Math.min(1,(now-start)/dur); const eased=1-Math.pow(1-p,3); el.textContent=prefix+Math.round(target*eased).toLocaleString('en-NG'); if(p<1) requestAnimationFrame(tick); }
+  requestAnimationFrame(tick);
+}
+function updateCartBadge(){
+  const badge = document.getElementById('cartBadge');
+  if(cart.length){ badge.style.display='flex'; badge.textContent = cart.length; } else { badge.style.display='none'; }
+  const bar = document.getElementById('stickyCheckoutBar');
+  const onCartPage = location.hash.replace('#','')==='cart';
+  if(cart.length && !onCartPage){
+    bar.classList.add('show');
+    document.getElementById('stickyCheckoutTotal').textContent = naira(cartTotal());
+  } else {
+    bar.classList.remove('show');
+  }
+}
+
+/* ================= AUTH ================= */
+async function signUp(email, password, fullName, referralInput){
+  if(users.find(u=>u.email.toLowerCase()===email.toLowerCase())){ toast('That email is already registered. Log in instead.','error'); return false; }
+  let referrer = null;
+  if(referralInput){
+    referrer = users.find(u=>u.referralCode.toLowerCase()===referralInput.trim().toLowerCase());
+    if(!referrer){ toast('That referral code doesn\u2019t exist. Check it and try again.','error'); return false; }
+  }
+  const newUser = { id:'user_'+Date.now(), email, password, name:fullName, wallet:5000, referralCode:refCode(), referredBy: referrer?referrer.id:null, createdAt:new Date().toISOString() };
+  users.push(newUser);
+  if(referrer){
+    referrer.wallet += 200;
+    users[users.findIndex(u=>u.id===referrer.id)] = referrer;
+    transactions.push({ id:txnId(), userId:referrer.id, type:'REFERRAL Bonus', amount:200, status:'Success', details:`${fullName} joined using your code`, timestamp:new Date().toISOString() });
+    await persistTxns();
+  }
+  const guestCart = (await storageGet('app:cart:guest')) || [];
+  currentUser = newUser;
+  cart = guestCart;
+  await persistUsers(); await persistSession(); await persistCart();
+  toast(referrer ? `Account created. ₦5,000 welcome bonus added — ${referrer.name.split(' ')[0]} earned ₦200 for referring you.` : `Account created. We added a ₦5,000 welcome bonus to your wallet.`);
+  return true;
+}
+async function signIn(email, password){
+  const user = users.find(u=>u.email.toLowerCase()===email.toLowerCase() && u.password===password);
+  if(!user){ toast('That email and password combination doesn\u2019t match our records.','error'); return false; }
+  const guestCart = (await storageGet('app:cart:guest')) || [];
+  currentUser = user;
+  const existingCart = (await storageGet('app:cart:'+user.id)) || [];
+  cart = [...existingCart, ...guestCart];
+  await persistSession(); await persistCart();
+  if(guestCart.length) await storageSet('app:cart:guest', []);
+  toast('Welcome back, ' + user.name.split(' ')[0] + '.');
+  return true;
+}
+async function signOut(){ currentUser=null; cart=[]; await persistSession(); toast('You\u2019ve been logged out.'); location.hash=''; }
+async function forgotPassword(email){
+  const user = users.find(u=>u.email.toLowerCase()===email.toLowerCase());
+  if(!user){ toast('We couldn\u2019t find an account with that email.','error'); return; }
+  openModal(`<h3>Password reminder</h3><p style="color:var(--ink-soft); font-size:0.9rem; margin-bottom:1rem;">This is a demo with no email delivery, so here is your password directly:</p>
+  <div class="card mono" style="padding:1rem; text-align:center; font-size:1.1rem; background:var(--naira-soft); color:var(--naira); border:none;">${user.password}</div>
+  <button class="btn-primary btn-block" style="margin-top:1.2rem;" onclick="closeModal()">Done</button>`);
+}
+async function updateWallet(amount, isAdd=true){
+  if(!currentUser) return false;
+  if(isAdd){ currentUser.wallet += amount; }
+  else { if(currentUser.wallet < amount){ toast('Your wallet balance is too low.','error'); return false; } currentUser.wallet -= amount; }
+  users[users.findIndex(u=>u.id===currentUser.id)] = currentUser;
+  await persistUsers();
+  return true;
+}
+async function addTransaction(type, amount, status, details=''){
+  if(!currentUser) return null;
+  const txn = { id:txnId(), userId:currentUser.id, type, amount, status, details, timestamp:new Date().toISOString() };
+  transactions.push(txn); await persistTxns(); return txn;
+}
+function getUserTransactions(){ return transactions.filter(t=>t.userId===currentUser?.id).slice().reverse(); }
+
+/* ================= CART ================= */
+async function addToCart(item){
+  cart.push({ ...item, lineId: lineId() });
+  await persistCart();
+  toast(`Added to cart — ${item.name}.`);
+}
+async function removeFromCart(lineId){
+  cart = cart.filter(i=>i.lineId!==lineId);
+  await persistCart();
+  renderPage();
+}
+function cartTotal(){ return cart.reduce((s,i)=>s+i.price,0); }
+
+/* ================= ROUTING ================= */
+let balanceHidden = false;
+function buildNavDropdowns(){
+  const mkList = (base) => NETWORKS.map(n=>{
+    const slug = n.toLowerCase()==='9mobile' ? '9mobile' : n.toLowerCase();
+    return `<a href="#${base}/${slug}"><span class="net-dot" style="background:${NETWORK_COLOR[n]}"></span>${n}</a>`;
+  }).join('');
+  document.getElementById('dataDropdown').innerHTML = mkList('data');
+  document.getElementById('airtimeDropdown').innerHTML = mkList('airtime');
+  document.getElementById('mobileNavPanel').innerHTML = `
+    <div class="grp-label">Data</div>${mkList('data')}
+    <div class="grp-label">Airtime</div>${mkList('airtime')}
+    <div class="grp-label">More</div>
+    <div class="mnp-link" onclick="location.hash='cart'"><i class="fas fa-cart-shopping"></i> Cart</div>
+  `;
+}
+buildNavDropdowns();
+document.getElementById('mobileNavToggle').addEventListener('click', ()=> document.getElementById('mobileNavPanel').classList.toggle('open'));
+
+async function renderPage(){
+  document.getElementById('mobileNavPanel').classList.remove('open');
+  const raw = location.hash.replace('#','');
+  const parts = raw.split('/');
+  const route = parts[0];
+
+  if((route==='dashboard' || route==='admin') && !currentUser){ toast('Log in to continue.','error'); location.hash='login'; return; }
+  if(route==='admin' && currentUser && currentUser.email!=='admin@recharge9ja.com'){ toast('Admin access only.','error'); location.hash='dashboard'; return; }
+
+  updateNav();
+  updateCartBadge();
+
+  if(route==='login') renderLoginPage();
+  else if(route==='signup') renderSignupPage();
+  else if(route==='dashboard') renderDashboardPage();
+  else if(route==='admin') renderAdminPage();
+  else if(route==='cart') renderCartPage();
+  else if(route==='data') renderDataCatalog(parts[1]||'mtn');
+  else if(route==='airtime') renderAirtimeCatalog(parts[1]||'mtn');
+  else renderHomePage();
+}
+function updateNav(){
+  const authLinks = document.getElementById('navAuthLinks');
+  const userArea = document.getElementById('navUserArea');
+  if(currentUser){
+    authLinks.style.display='none'; userArea.style.display='block';
+    document.getElementById('topAvatarInitials').textContent = initials(currentUser.name);
+    document.getElementById('ddAdmin').style.display = currentUser.email==='admin@recharge9ja.com' ? 'flex' : 'none';
+  } else {
+    authLinks.style.display='flex'; userArea.style.display='none';
+  }
+}
+document.getElementById('ddLogout').addEventListener('click', ()=>{ document.getElementById('avatarDropdown').classList.remove('open'); signOut(); });
+document.getElementById('ddEditProfile').addEventListener('click', ()=>{ document.getElementById('avatarDropdown').classList.remove('open'); openEditProfileModal(); });
+document.getElementById('avatarBtn').addEventListener('click', ()=> document.getElementById('avatarDropdown').classList.toggle('open'));
+document.addEventListener('click', e=>{ if(!e.target.closest('.avatar-menu')) document.getElementById('avatarDropdown').classList.remove('open'); });
+document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+window.addEventListener('hashchange', renderPage);
+
+/* ================= HOME ================= */
+function renderHomePage(){
+  document.getElementById('pageContent').innerHTML = `
+    <section class="hero fade-in">
+      <div>
+        <div class="eyebrow">Est. 2019 · Licensed VTU reseller</div>
+        <h1>Do more for less on every network</h1>
+        <p>Buy cheap data and airtime for MTN, Airtel, Glo and 9mobile — all from one wallet, with instant delivery on every order.</p>
+        <div class="hero-actions">
+          <button class="btn-primary" onclick="location.hash='data/mtn'"><i class="fas fa-wifi"></i> Get data</button>
+          <button class="btn-outline" onclick="location.hash='airtime/mtn'"><i class="fas fa-mobile-alt"></i> Get airtime</button>
+        </div>
+        <div class="trust-row">
+          <div><strong>${(users.length + 4812).toLocaleString()}+</strong>customers served</div>
+          <div><strong>4 networks</strong>MTN · Airtel · Glo · 9mobile</div>
+          <div><strong>RC 1867234</strong>CAC-registered business</div>
+        </div>
+      </div>
+      <div class="ticket" aria-hidden="true">
+        <div class="ticket-header"><span class="tag">Recharge ticket</span><span class="status">Confirmed</span></div>
+        <div class="ticket-amount mono">${naira(2300)}</div>
+        <div class="ticket-sub">MTN · 5GB Data Bundle</div>
+        <div class="ticket-rows mono">
+          <div><span>Reference</span><span>${txnId()}</span></div>
+          <div><span>Recipient</span><span>0803•••4521</span></div>
+          <div><span>Status</span><span>Delivered</span></div>
+        </div>
+        <div class="ticket-barcode">${Array.from({length:38}).map(()=>`<span style="height:${8+Math.random()*24}px"></span>`).join('')}</div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head"><div><h2>Choose your network</h2><p>Pick a network to see live data bundle prices.</p></div></div>
+      <div class="network-picker">
+        ${NETWORKS.map(n=>{ const slug = n==='9mobile'?'9mobile':n.toLowerCase();
+          return `<div class="card network-tile" onclick="location.hash='data/${slug}'">
+            <div class="badge-circle" style="background:${NETWORK_COLOR[n]}; color:${NETWORK_TEXT[n]};">${n[0]}</div>
+            <h4>${n}</h4><small>View data plans</small>
+          </div>`; }).join('')}
+      </div>
+    </section>
+
+    <section class="about-strip">
+      <div>
+        <div class="eyebrow">Our story</div>
+        <h2 style="margin-bottom:0.8rem;">Started in a Yaba co-working space, built for everyday Nigerians</h2>
+        <p style="color:var(--ink-soft); font-size:0.95rem; margin-bottom:0.9rem;">Recharge9ja Technologies Ltd began in 2019 with one goal: make it painless to stay connected without queuing at a kiosk or trusting a stranger's transfer. Today we process orders across MTN, Airtel, Glo and 9mobile from our office in Ikeja, with a small support team on ground from 8am to 10pm daily.</p>
+        <div style="display:flex; gap:1.6rem; flex-wrap:wrap; margin-top:1rem;">
+          <div><strong style="display:block; font-family:'Space Grotesk',sans-serif; font-size:1.1rem;">8am – 10pm</strong><span style="font-size:0.8rem; color:var(--ink-soft);">Mon – Sat support</span></div>
+          <div><strong style="display:block; font-family:'Space Grotesk',sans-serif; font-size:1.1rem;">10am – 6pm</strong><span style="font-size:0.8rem; color:var(--ink-soft);">Sunday support</span></div>
+          <div><strong style="display:block; font-family:'Space Grotesk',sans-serif; font-size:1.1rem;">&lt; 5 sec</strong><span style="font-size:0.8rem; color:var(--ink-soft);">average delivery time</span></div>
+        </div>
+      </div>
+      <div class="card quote">
+        <div class="stars">★★★★★</div>
+        <blockquote>"We built Recharge9ja because our own families were tired of failed recharge apps. Every order you place is backed by a real support line, not a chatbot."</blockquote>
+        <div class="who">— Ifeoma Adeyemi, Founder & CEO, Recharge9ja Technologies Ltd</div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head"><div><h2>What our customers say</h2><p>Reviews from verified wallet holders.</p></div></div>
+      <div class="testimonial-grid">
+        <div class="card testimonial-card"><div class="stars">★★★★★</div><p>"I switched from my old agent after one too many delays. Recharge9ja's 2GB MTN plan lands before the toast notification even disappears."</p><div class="who">Amarachi Obi · Enugu · Verified customer</div></div>
+        <div class="card testimonial-card"><div class="stars">★★★★★</div><p>"I run a small provisions shop and top up 5 different lines every week for my customers. This is the only platform that hasn't let me down yet."</p><div class="who">Tunde Ajayi · Ibadan · Reseller since 2022</div></div>
+        <div class="card testimonial-card"><div class="stars">★★★★★</div><p>"Referral bonus is real money, not points. I've earned over ₦4,000 just from sharing my code in my church WhatsApp group."</p><div class="who">Chioma Nwankwo · Port Harcourt · Verified customer</div></div>
+      </div>
+    </section>
+
+    <div class="card contact-strip">
+      <div><i class="fas fa-phone"></i> +234 803 456 7890</div>
+      <div><i class="fas fa-envelope"></i> support@recharge9ja.com</div>
+      <div><i class="fab fa-whatsapp"></i> +234 803 456 7890</div>
+      <div><i class="fas fa-location-dot"></i> 14B Adeniyi Jones Ave, Ikeja, Lagos</div>
+    </div>
+  `;
+}
+
+/* ================= DATA / AIRTIME CATALOG ================= */
+function renderDataCatalog(slug){
+  const network = NETWORK_SLUG[slug] || 'MTN';
+  const plans = dataPlans.filter(p=>p.network===network);
+  document.getElementById('pageContent').innerHTML = `
+    <div class="fade-in">
+    <div class="catalog-header">
+      <div class="net-icon" style="background:${NETWORK_COLOR[network]}; color:${NETWORK_TEXT[network]};">${network[0]}</div>
+      <div><h1>${network} Data Bundles</h1><p>Take advantage of ${network}'s wide coverage. Pick a plan below — it's added to your cart, and delivered the moment you check out.</p></div>
+    </div>
+    <div class="network-switch">${NETWORKS.map(n=>{ const s=n==='9mobile'?'9mobile':n.toLowerCase(); return `<a href="#data/${s}" class="${n===network?'active':''}">${n}</a>`; }).join('')}</div>
+    <div class="plan-catalog-grid" id="planCatalogGrid"></div>
+
+    <section style="margin-top:2rem;">
+      <div class="section-head"><h2 style="font-size:1.25rem;">Frequently asked questions</h2></div>
+      <div class="card" style="padding:0.4rem 1.3rem;" id="faqBox"></div>
+    </section>
+    </div>
+  `;
+  const grid = document.getElementById('planCatalogGrid');
+  grid.innerHTML = plans.length ? plans.map(p=>`
+    <div class="card plan-tile">
+      <div class="top-row"><div class="size">${p.size}</div><span class="net-chip" style="background:${NETWORK_COLOR[network]}; color:${NETWORK_TEXT[network]};">${network}</span></div>
+      <div class="price-row"><span class="price">${naira(p.price)}</span><span class="validity">${p.validity}</span></div>
+      <button class="btn-success btn-block btn-sm" data-plan="${p.id}">Buy now</button>
+    </div>`).join('') : `<div class="empty-state" style="grid-column:1/-1;"><i class="fas fa-wifi"></i>No ${network} plans available right now.</div>`;
+  grid.querySelectorAll('[data-plan]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const plan = dataPlans.find(p=>String(p.id)===btn.dataset.plan);
+      openBeneficiaryModal({ type:'data', network, name:`${network} ${plan.size} Data`, price:plan.price, meta:plan.validity });
+    });
+  });
+  renderFaqBox();
+}
+function renderAirtimeCatalog(slug){
+  const network = NETWORK_SLUG[slug] || 'MTN';
+  document.getElementById('pageContent').innerHTML = `
+    <div class="fade-in">
+    <div class="catalog-header">
+      <div class="net-icon" style="background:${NETWORK_COLOR[network]}; color:${NETWORK_TEXT[network]};">${network[0]}</div>
+      <div><h1>${network} Airtime</h1><p>Top up any ${network} number instantly. Enter an amount and a phone number to add it to your cart.</p></div>
+    </div>
+    <div class="network-switch">${NETWORKS.map(n=>{ const s=n==='9mobile'?'9mobile':n.toLowerCase(); return `<a href="#airtime/${s}" class="${n===network?'active':''}">${n}</a>`; }).join('')}</div>
+    <div class="card airtime-form-card">
+      <div class="field"><label>Amount (₦)</label><input id="airtimeAmount" type="number" placeholder="500">
+        <div class="amount-chips">${[100,200,500,1000,2000,5000].map(v=>`<button type="button" class="amount-chip" data-amt="${v}">${naira(v)}</button>`).join('')}</div>
+      </div>
+      <div class="field"><label>Phone number</label><input id="airtimePhone" placeholder="0803 000 0000" maxlength="11"><div id="airtimeNetBadge" style="font-size:0.78rem; color:var(--ink-soft); margin-top:0.4rem;"></div></div>
+      <button class="btn-success btn-block" id="airtimeAddBtn"><i class="fas fa-cart-plus"></i> Add to cart</button>
+    </div>
+
+    <section style="margin-top:2rem;">
+      <div class="section-head"><h2 style="font-size:1.25rem;">Frequently asked questions</h2></div>
+      <div class="card" style="padding:0.4rem 1.3rem;" id="faqBox"></div>
+    </section>
+    </div>
+  `;
+  document.querySelectorAll('.amount-chip').forEach(chip=>{
+    chip.addEventListener('click', ()=>{
+      document.querySelectorAll('.amount-chip').forEach(c=>c.classList.remove('active'));
+      chip.classList.add('active');
+      document.getElementById('airtimeAmount').value = chip.dataset.amt;
+    });
+  });
+  document.getElementById('airtimePhone').addEventListener('input', e=>{
+    sanitizePhoneInput(e);
+    const detected = detectNetwork(e.target.value);
+    const badge = document.getElementById('airtimeNetBadge');
+    if(!detected){ badge.textContent=''; return; }
+    badge.innerHTML = detected===network ? `<span style="color:var(--naira);"><i class="fas fa-circle-check"></i> Matches ${network}</span>` : `<span style="color:var(--danger);"><i class="fas fa-triangle-exclamation"></i> This number looks like ${detected}, not ${network}</span>`;
+  });
+  document.getElementById('airtimeAddBtn').addEventListener('click', ()=>{
+    const amt = Math.floor(Number(document.getElementById('airtimeAmount').value));
+    const phone = document.getElementById('airtimePhone').value.trim();
+    if(!amt || amt<50){ toast('Enter an amount of at least ₦50.','error'); return; }
+    if(!isValidPhone(phone)){ toast('Enter a valid 11-digit Nigerian phone number.','error'); return; }
+    addToCart({ type:'airtime', network, name:`${network} Airtime`, price:amt, phone, meta:'Instant top-up' });
+  });
+  renderFaqBox();
+}
+function renderFaqBox(){
+  const box = document.getElementById('faqBox');
+  box.innerHTML = FAQS.map((f,i)=>`
+    <div class="faq-item" data-i="${i}">
+      <div class="faq-q">${f[0]} <i class="fas fa-chevron-down"></i></div>
+      <div class="faq-a">${f[1]}</div>
+    </div>`).join('');
+  box.querySelectorAll('.faq-item').forEach(item=>{
+    item.querySelector('.faq-q').addEventListener('click', ()=> item.classList.toggle('open'));
+  });
+}
+
+/* ================= BENEFICIARY MODAL (data plan purchase) ================= */
+function openBeneficiaryModal(item){
+  openModal(`
+    <h3>${item.name}</h3>
+    <div style="display:flex; justify-content:space-between; align-items:center; background:var(--sunken); border-radius:0.8rem; padding:0.9rem 1.1rem; margin-bottom:1.2rem;">
+      <span style="font-size:0.85rem; color:var(--ink-soft);">${item.meta||''}</span>
+      <span class="mono" style="font-weight:700; color:var(--naira);">${naira(item.price)}</span>
+    </div>
+    <div class="field"><label>Beneficiary phone number</label><input id="beneficiaryPhone" placeholder="0803 000 0000" maxlength="11">
+      <div class="field-error" id="beneficiaryError">Enter a valid 11-digit Nigerian phone number.</div>
+    </div>
+    <button class="btn-success btn-block" id="addToCartBtn"><i class="fas fa-cart-plus"></i> Add to cart</button>
+  `);
+  document.getElementById('beneficiaryPhone').addEventListener('input', sanitizePhoneInput);
+  document.getElementById('addToCartBtn').addEventListener('click', async ()=>{
+    const phone = document.getElementById('beneficiaryPhone').value.trim();
+    if(!isValidPhone(phone)){ document.getElementById('beneficiaryError').style.display='block'; return; }
+    await addToCart({ ...item, phone });
+    closeModal();
+  });
+}
+
+/* ================= CART PAGE ================= */
+function renderCartPage(){
+  document.getElementById('pageContent').innerHTML = `
+    <div class="fade-in" style="padding:2rem 0;">
+    <div class="section-head"><h2>Your cart</h2>${cart.length?`<span style="color:var(--ink-soft); font-size:0.85rem;">${cart.length} item${cart.length>1?'s':''}</span>`:''}</div>
+    <div class="dash-grid">
+      <div class="card" id="cartItemsBox">
+        ${cart.length?`<div style="display:flex; justify-content:space-between; align-items:center; padding:1.1rem 1.1rem 0.9rem; border-bottom:1px solid var(--border);">
+          <span style="font-size:0.85rem; color:var(--ink-soft);">${cart.length} item${cart.length>1?'s':''} in cart</span>
+          <button class="btn-primary btn-sm" id="checkoutBtnTop"><i class="fas fa-lock"></i> Proceed to checkout</button>
+        </div>`:''}
+        <div id="cartItemsList"></div>
+      </div>
+      <div class="card" style="padding:1.4rem;">
+        <h3 style="font-size:1.02rem; margin-bottom:1rem;">Order summary</h3>
+        <div class="cart-summary-row"><span>Subtotal</span><span class="mono">${naira(cartTotal())}</span></div>
+        <div class="cart-summary-row"><span>Delivery</span><span>Instant · Free</span></div>
+        <div class="cart-summary-row total"><span>Total</span><span class="mono">${naira(cartTotal())}</span></div>
+        <button class="btn-success btn-block" id="checkoutBtn" style="margin-top:1.1rem;" ${cart.length?'':'disabled'}><i class="fas fa-lock"></i> Proceed to checkout</button>
+        ${!currentUser ? `<div class="hint" style="margin-top:0.7rem; text-align:center;">You'll be asked to log in or sign up before checkout.</div>` : `<div class="hint" style="margin-top:0.7rem; text-align:center;">Paid from your wallet balance of ${naira(currentUser.wallet)}.</div>`}
+      </div>
+    </div>
+    </div>
+  `;
+  const box = document.getElementById('cartItemsList');
+  if(!cart.length){
+    box.innerHTML = `<div class="empty-state"><i class="fas fa-cart-shopping"></i>Your cart is empty. <a href="#data/mtn">Browse data plans</a> to get started.</div>`;
+  } else {
+    box.innerHTML = cart.map(i=>`
+      <div class="cart-item">
+        <div class="ic" style="background:${NETWORK_COLOR[i.network]}; color:${NETWORK_TEXT[i.network]};"><i class="fas fa-${i.type==='data'?'wifi':'mobile-alt'}"></i></div>
+        <div class="info"><div class="nm">${i.name}</div><div class="dt">To ${i.phone} ${i.meta?('· '+i.meta):''}</div></div>
+        <div class="price mono">${naira(i.price)}</div>
+        <button class="btn-icon" data-remove="${i.lineId}" title="Remove"><i class="fas fa-trash"></i></button>
+      </div>`).join('');
+    box.querySelectorAll('[data-remove]').forEach(btn=> btn.addEventListener('click', ()=> removeFromCart(btn.dataset.remove)));
+  }
+  document.getElementById('checkoutBtn')?.addEventListener('click', handleCheckout);
+  document.getElementById('checkoutBtnTop')?.addEventListener('click', handleCheckout);
+}
+async function handleCheckout(){
+  if(!cart.length) return;
+  if(!currentUser){
+    openModal(`
+      <h3>Log in to check out</h3>
+      <p style="color:var(--ink-soft); font-size:0.88rem; margin-bottom:1.2rem;">Your cart is saved — log in or create an account to complete this order.</p>
+      <button class="btn-primary btn-block" style="margin-bottom:0.7rem;" onclick="closeModal(); location.hash='login';">Log in</button>
+      <button class="btn-outline btn-block" onclick="closeModal(); location.hash='signup';">Create an account</button>
+    `);
+    return;
+  }
+  const total = cartTotal();
+  if(currentUser.wallet < total){
+    toast(`Insufficient balance — you need ${naira(total-currentUser.wallet)} more.`,'error');
+    openFundWalletModal(total-currentUser.wallet);
+    return;
+  }
+  const btn = document.getElementById('checkoutBtn') || document.getElementById('checkoutBtnTop');
+  if(btn) withSpinner(btn, 'Processing…');
+  await simulateDelay(1000);
+  await updateWallet(total, false);
+  const receiptItems = [];
+  for(const item of cart){
+    const label = item.type==='data' ? 'DATA Purchase' : 'AIRTIME Purchase';
+    const details = `${item.name} to ${item.phone}`;
+    const txn = await addTransaction(label, item.price, 'Success', details);
+    receiptItems.push(txn);
+  }
+  cart = [];
+  await persistCart();
+  if(btn) clearSpinner(btn);
+  showReceiptModal(receiptItems, total);
+}
+function showReceiptModal(items, total){
+  openModal(`
+    <div class="ticket" style="margin:-0.3rem 0 0.2rem;">
+      <div class="ticket-header"><span class="tag">Order confirmed</span><span class="status">Delivered</span></div>
+      <div class="ticket-amount mono">${naira(total)}</div>
+      <div class="ticket-sub">${items.length} item${items.length>1?'s':''}</div>
+      <div class="ticket-rows mono">${items.map(t=>`<div><span>${t.details.length>26?t.details.slice(0,26)+'…':t.details}</span><span>${naira(t.amount)}</span></div>`).join('')}</div>
+      <div class="ticket-barcode">${Array.from({length:38}).map(()=>`<span style="height:${8+Math.random()*24}px"></span>`).join('')}</div>
+    </div>
+    <button class="btn-primary btn-block" style="margin-top:1.1rem;" onclick="closeModal(); location.hash='dashboard';">Done</button>
+  `);
+}
+
+/* ================= LOGIN / SIGNUP ================= */
+function togglePw(id){ const el = document.getElementById(id); el.type = el.type==='password' ? 'text' : 'password'; }
+function renderLoginPage(){
+  document.getElementById('pageContent').innerHTML = `
+    <div class="auth-wrap"><div class="card auth-shell fade-in">
+      <h2>Welcome back</h2>
+      <p class="sub">Log in to manage your wallet and check out.</p>
+      <div class="field" id="loginEmailField"><label>Email address</label><input type="email" id="loginEmail" placeholder="you@example.com"><div class="field-error">Enter a valid email address.</div></div>
+      <div class="field" id="loginPwField"><label>Password</label><div class="password-wrap"><input type="password" id="loginPassword" placeholder="Your password"><i class="fas fa-eye" onclick="togglePw('loginPassword')"></i></div><div class="field-error">Enter your password.</div></div>
+      <div class="remember-row"><label><input type="checkbox" id="rememberMe" checked> Remember me</label><a href="javascript:void(0)" id="forgotBtn">Forgot password?</a></div>
+      <button class="btn-primary btn-block" id="loginBtn">Log in</button>
+      <p class="auth-foot">Don't have an account? <a href="#signup">Create one</a></p>
+      <div class="demo-note">Demo tip: sign up once, then use those same details to log back in.</div>
+    </div></div>
+  `;
+  const submit = ()=> doLogin();
+  document.getElementById('loginBtn').addEventListener('click', submit);
+  document.querySelectorAll('#loginEmail,#loginPassword').forEach(inp=> inp.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); submit(); } }));
+  document.getElementById('forgotBtn').addEventListener('click', ()=>{
+    openModal(`<h3>Reset your password</h3><div class="field"><label>Email address</label><input type="email" id="forgotEmailInput" placeholder="you@example.com"></div><button class="btn-primary btn-block" id="forgotSubmitBtn">Send reminder</button>`);
+    document.getElementById('forgotSubmitBtn').addEventListener('click', ()=>{
+      const email = document.getElementById('forgotEmailInput').value.trim();
+      if(!isValidEmail(email)){ toast('Enter a valid email address.','error'); return; }
+      forgotPassword(email);
+    });
+  });
+}
+async function doLogin(){
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  let ok = true;
+  document.getElementById('loginEmailField').classList.toggle('has-error', !isValidEmail(email)); if(!isValidEmail(email)) ok=false;
+  document.getElementById('loginPwField').classList.toggle('has-error', !password); if(!password) ok=false;
+  if(!ok) return;
+  const btn = document.getElementById('loginBtn'); withSpinner(btn,'Logging in…');
+  await simulateDelay(500);
+  const success = await signIn(email, password);
+  clearSpinner(btn);
+  if(success) location.hash='dashboard';
+}
+function renderSignupPage(){
+  const prefillRef = new URLSearchParams(location.search).get('ref') || '';
+  document.getElementById('pageContent').innerHTML = `
+    <div class="auth-wrap"><div class="card auth-shell fade-in">
+      <h2>Create your account</h2>
+      <p class="sub">Get a ₦5,000 welcome bonus when you sign up.</p>
+      <div class="field" id="nameField"><label>Full name</label><input id="signupName" placeholder="Your full name"><div class="field-error">Enter your full name.</div></div>
+      <div class="field" id="emailField"><label>Email address</label><input id="signupEmail" placeholder="you@example.com"><div class="field-error">Enter a valid email address.</div></div>
+      <div class="field" id="pwField"><label>Password</label><div class="password-wrap"><input type="password" id="signupPassword" placeholder="At least 6 characters"><i class="fas fa-eye" onclick="togglePw('signupPassword')"></i></div><div class="field-error">Password must be at least 6 characters.</div></div>
+      <div class="field" id="refField"><label>Referral code (optional)</label><input id="signupReferral" placeholder="e.g. REF4K9X2P" value="${prefillRef}" style="text-transform:uppercase;"><div class="field-error">That referral code doesn't exist.</div></div>
+      <button class="btn-primary btn-block" id="registerBtn">Create account</button>
+      <p class="auth-foot">Already have an account? <a href="#login">Log in</a></p>
+    </div></div>
+  `;
+  document.getElementById('registerBtn').addEventListener('click', doSignup);
+  document.querySelectorAll('#pageContent input').forEach(inp=> inp.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); doSignup(); } }));
+}
+async function doSignup(){
+  const name = document.getElementById('signupName').value.trim();
+  const email = document.getElementById('signupEmail').value.trim();
+  const password = document.getElementById('signupPassword').value;
+  const referral = document.getElementById('signupReferral').value.trim();
+  let ok = true;
+  document.getElementById('nameField').classList.toggle('has-error', !name); if(!name) ok=false;
+  document.getElementById('emailField').classList.toggle('has-error', !isValidEmail(email)); if(!isValidEmail(email)) ok=false;
+  document.getElementById('pwField').classList.toggle('has-error', password.length<6); if(password.length<6) ok=false;
+  document.getElementById('refField').classList.remove('has-error');
+  if(!ok) return;
+  const btn = document.getElementById('registerBtn'); withSpinner(btn,'Creating account…');
+  await simulateDelay(600);
+  const success = await signUp(email, password, name, referral);
+  clearSpinner(btn);
+  if(!success && referral) document.getElementById('refField').classList.add('has-error');
+  if(success) location.hash='dashboard';
+}
+
+/* ================= DASHBOARD ================= */
+function renderDashboardPage(){
+  if(!currentUser){ location.hash='login'; return; }
+  const userTxns = getUserTransactions();
+  document.getElementById('pageContent').innerHTML = `
+    <div class="dash-grid fade-in" style="padding-top:1.8rem;">
+      <div>
+        <div class="card balance-card">
+          <div class="balance-top"><div class="lbl">Wallet balance</div><button class="balance-eye" id="balanceEyeBtn"><i class="fas fa-eye"></i></button></div>
+          <div class="balance-amount mono" id="balanceAmount">₦0</div>
+          <div class="balance-actions">
+            <button class="btn-sm" id="fundWalletBtn"><i class="fas fa-plus"></i> Fund wallet</button>
+            <button class="btn-sm" id="copyRefBtnTop"><i class="fas fa-share-nodes"></i> ${currentUser.referralCode}</button>
+            <button class="btn-sm" onclick="location.hash='cart'"><i class="fas fa-cart-shopping"></i> Cart ${cart.length?('('+cart.length+')'):''}</button>
+          </div>
+        </div>
+        <div class="mini-stat-row">
+          <div class="card mini-stat"><div class="ic" style="background:var(--signal-soft); color:var(--signal);"><i class="fas fa-receipt"></i></div><div class="lbl">Transactions</div><div class="val">${userTxns.length}</div></div>
+          <div class="card mini-stat"><div class="ic" style="background:var(--amber-soft); color:var(--amber);"><i class="fas fa-gift"></i></div><div class="lbl">Referral bonus</div><div class="val">₦200 / signup</div></div>
+        </div>
+        <div class="card" style="margin-top:1.4rem; padding:1.4rem;">
+          <h3 style="font-size:1.02rem; margin-bottom:1rem;">Shop by network</h3>
+          <div class="network-picker">${NETWORKS.map(n=>{ const s=n==='9mobile'?'9mobile':n.toLowerCase(); return `<div class="card network-tile" onclick="location.hash='data/${s}'"><div class="badge-circle" style="background:${NETWORK_COLOR[n]}; color:${NETWORK_TEXT[n]};">${n[0]}</div><h4>${n}</h4><small>View plans</small></div>`; }).join('')}</div>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <div class="section-head" style="padding:1.2rem 1.2rem 0;"><h2 style="font-size:1.02rem;">Recent transactions</h2>${userTxns.length? `<button class="btn-ghost btn-sm" id="viewAllTxns">View all</button>`:''}</div>
+          <div id="txnList"></div>
+        </div>
+      </div>
+    </div>
+  `;
+  const amountEl = document.getElementById('balanceAmount');
+  countUp(amountEl, currentUser.wallet);
+  document.getElementById('balanceEyeBtn').addEventListener('click', ()=>{
+    balanceHidden = !balanceHidden;
+    document.getElementById('balanceEyeBtn').innerHTML = balanceHidden ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
+    if(balanceHidden) amountEl.textContent='₦ • • • • • •'; else countUp(amountEl, currentUser.wallet);
+  });
+  renderTxnList(userTxns.slice(0,6));
+  document.getElementById('fundWalletBtn').addEventListener('click', ()=>openFundWalletModal());
+  document.getElementById('copyRefBtnTop').addEventListener('click', (e)=>{
+    navigator.clipboard.writeText(currentUser.referralCode);
+    const btn=e.currentTarget; const orig=btn.innerHTML;
+    btn.innerHTML='<i class="fas fa-check"></i> Copied'; toast('Referral code copied.');
+    setTimeout(()=> btn.innerHTML=orig, 1500);
+  });
+  document.getElementById('viewAllTxns')?.addEventListener('click', ()=> openAllTxnsModal(userTxns));
+}
+function renderTxnList(list){
+  const el = document.getElementById('txnList');
+  if(!list.length){ el.innerHTML = `<div class="empty-state"><i class="fas fa-receipt"></i>No transactions yet — your purchases will show up here.</div>`; return; }
+  const icons = {AIRTIME:'mobile-alt', DATA:'wifi', REFERRAL:'gift', WALLET:'wallet'};
+  el.innerHTML = list.map(t=>{ const key=t.type.split(' ')[0];
+    return `<div class="txn-row" data-txn="${t.id}"><div class="txn-left"><div class="txn-icon"><i class="fas fa-${icons[key]||'receipt'}"></i></div>
+    <div style="min-width:0;"><div class="txn-name">${t.type}</div><div class="txn-detail">${t.details||''}</div></div></div>
+    <div class="txn-right"><div style="text-align:right;"><div class="txn-amount">${naira(t.amount)}</div><span class="txn-status ${t.status}">${t.status}</span></div>
+    <button class="txn-view-btn" data-txn-view="${t.id}" title="View receipt"><i class="fas fa-receipt"></i> Receipt</button></div></div>`; }).join('');
+  el.querySelectorAll('[data-txn-view]').forEach(btn=> btn.addEventListener('click', (e)=>{ e.stopPropagation(); viewTxnReceipt(btn.dataset.txnView); }));
+  el.querySelectorAll('[data-txn]').forEach(row=> row.addEventListener('click', ()=> viewTxnReceipt(row.dataset.txn)));
+}
+function viewTxnReceipt(id){
+  const t = transactions.find(x=>x.id===id);
+  if(!t){ toast('Receipt not found.','error'); return; }
+  openModal(`
+    <div class="ticket" style="margin:-0.3rem 0 0.2rem;">
+      <div class="ticket-header"><span class="tag">${t.type}</span><span class="status">${t.status}</span></div>
+      <div class="ticket-amount mono">${naira(t.amount)}</div>
+      <div class="ticket-sub">${t.details || t.type}</div>
+      <div class="ticket-rows mono">
+        <div><span>Reference</span><span>${t.id}</span></div>
+        <div><span>Date</span><span>${new Date(t.timestamp).toLocaleDateString()}</span></div>
+        <div><span>Time</span><span>${new Date(t.timestamp).toLocaleTimeString()}</span></div>
+      </div>
+      <div class="ticket-barcode">${Array.from({length:38}).map(()=>`<span style="height:${8+Math.random()*24}px"></span>`).join('')}</div>
+    </div>
+    <button class="btn-primary btn-block" style="margin-top:1.1rem;" onclick="closeModal()">Close</button>
+  `);
+}
+function openFundWalletModal(prefill){
+  openModal(`
+    <h3>Fund wallet</h3>
+    <div class="field"><label>Amount (₦)</label><input id="fundAmount" type="number" placeholder="1000" min="100" value="${prefill?Math.ceil(prefill):''}"></div>
+    <div style="display:flex; gap:0.5rem; margin-bottom:1.2rem; flex-wrap:wrap;">${[500,1000,2000,5000].map(v=>`<button class="btn-outline btn-sm" onclick="document.getElementById('fundAmount').value=${v}">${naira(v)}</button>`).join('')}</div>
+    <label>Payment method</label>
+    <div class="service-tabs" id="fundMethodTabs" style="margin-bottom:1.1rem;">
+      <button type="button" class="service-tab active" data-method="card">Card</button>
+      <button type="button" class="service-tab" data-method="transfer">Bank transfer</button>
+      <button type="button" class="service-tab" data-method="ussd">USSD</button>
+    </div>
+    <div id="fundMethodPanel"></div>
+    <button class="btn-success btn-block" id="fundConfirmBtn" style="margin-top:1.1rem;">Add to wallet</button>
+  `);
+  const panel = document.getElementById('fundMethodPanel');
+  function renderMethodPanel(method){
+    if(method==='card'){
+      panel.innerHTML = `
+        <div class="field"><label>Card number</label><input id="fundCardNo" placeholder="5060 •••• •••• 1234" maxlength="19"></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem;">
+          <div class="field"><label>Expiry</label><input id="fundCardExp" placeholder="MM/YY" maxlength="5"></div>
+          <div class="field"><label>CVV</label><input id="fundCardCvv" placeholder="123" maxlength="3"></div>
+        </div>
+        <div class="hint"><i class="fas fa-lock"></i> Card details stay on this device — this demo never transmits them anywhere.</div>`;
+    } else if(method==='transfer'){
+      panel.innerHTML = `
+        <div class="card" style="padding:1rem; background:var(--sunken); border:none;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;"><span style="font-size:0.8rem; color:var(--ink-soft);">Bank</span><strong>Novus Microfinance Bank</strong></div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;"><span style="font-size:0.8rem; color:var(--ink-soft);">Account number</span><strong class="mono">8127634051</strong></div>
+          <div style="display:flex; justify-content:space-between;"><span style="font-size:0.8rem; color:var(--ink-soft);">Account name</span><strong>Recharge9ja Technologies Ltd</strong></div>
+        </div>
+        <div class="hint">Transfer the exact amount above, then tap "Add to wallet" — in this demo, funding confirms instantly instead of waiting for a webhook.</div>`;
+    } else {
+      panel.innerHTML = `
+        <div class="card" style="padding:1rem; background:var(--sunken); border:none; text-align:center;">
+          <div style="font-size:0.8rem; color:var(--ink-soft); margin-bottom:0.4rem;">Dial on your recharge line</div>
+          <strong class="mono" style="font-size:1.1rem;">*889*11*${'{amount}'}#</strong>
+        </div>
+        <div class="hint">Replace <span class="mono">{amount}</span> with the naira amount above and dial. This demo skips the real USSD session.</div>`;
+    }
+  }
+  renderMethodPanel('card');
+  document.querySelectorAll('#fundMethodTabs .service-tab').forEach(tab=>{
+    tab.addEventListener('click', ()=>{
+      document.querySelectorAll('#fundMethodTabs .service-tab').forEach(t=>t.classList.remove('active'));
+      tab.classList.add('active');
+      renderMethodPanel(tab.dataset.method);
+    });
+  });
+  document.getElementById('fundConfirmBtn').addEventListener('click', async (e)=>{
+    const amt = Math.floor(Number(document.getElementById('fundAmount').value));
+    if(!amt || amt<100){ toast('Enter an amount of at least ₦100.','error'); return; }
+    const btn=e.currentTarget; withSpinner(btn,'Processing…');
+    await simulateDelay(700);
+    await updateWallet(amt, true);
+    await addTransaction('WALLET Funding', amt, 'Success', 'Wallet top-up');
+    clearSpinner(btn); closeModal();
+    toast(`Wallet funded with ${naira(amt)}.`);
+    renderPage();
+  });
+}
+function openLegalModal(type){
+  const isTerms = type==='terms';
+  openModal(`
+    <h3>${isTerms?'Terms of use':'Privacy policy'}</h3>
+    <div style="font-size:0.87rem; color:var(--ink-soft); line-height:1.7; max-height:55vh; overflow-y:auto; padding-right:0.4rem;">
+      ${isTerms ? `
+        <p style="margin-bottom:0.8rem;"><strong>1. Who we are.</strong> Recharge9ja Technologies Ltd (RC 1867234) operates this platform from 14B Adeniyi Jones Ave, Ikeja, Lagos.</p>
+        <p style="margin-bottom:0.8rem;"><strong>2. Wallet funds.</strong> Wallet balances are used solely to pay for data, airtime, bills and pins on this platform and are non-transferable between accounts.</p>
+        <p style="margin-bottom:0.8rem;"><strong>3. Delivery.</strong> Orders are delivered to the phone number, meter or smart card number you provide. Double-check details before checkout — we can't reverse delivery to a wrong number.</p>
+        <p><strong>4. This build.</strong> This particular deployment is a product demo: no card or bank data leaves your device, and all "payments" simulate against an in-app wallet only.</p>
+      ` : `
+        <p style="margin-bottom:0.8rem;"><strong>What we collect.</strong> Your name, email, phone/meter/card numbers you enter for delivery, and your transaction history.</p>
+        <p style="margin-bottom:0.8rem;"><strong>What we don't do.</strong> We don't sell your data to third parties, and we don't store full card numbers.</p>
+        <p><strong>Contact.</strong> Questions about your data can be sent to support@recharge9ja.com.</p>
+      `}
+    </div>
+    <button class="btn-primary btn-block" style="margin-top:1.2rem;" onclick="closeModal()">Close</button>
+  `);
+}
+
+function openEditProfileModal(){
+  openModal(`<h3>Edit profile</h3>
+    <div class="field"><label>Full name</label><input id="editName" value="${currentUser.name}"></div>
+    <div class="field"><label>Email address</label><input id="editEmail" value="${currentUser.email}" disabled style="opacity:0.6;"></div>
+    <button class="btn-primary btn-block" id="saveProfileBtn">Save changes</button>`);
+  document.getElementById('saveProfileBtn').addEventListener('click', async ()=>{
+    const name = document.getElementById('editName').value.trim();
+    if(!name){ toast('Enter your full name.','error'); return; }
+    currentUser.name = name;
+    users[users.findIndex(u=>u.id===currentUser.id)] = currentUser;
+    await persistUsers(); closeModal(); toast('Profile updated.'); renderPage();
+  });
+}
+function openAllTxnsModal(list){
+  openModal(`<h3>All transactions</h3><div style="max-height:60vh; overflow-y:auto;" id="allTxnsBox"></div>`);
+  const box = document.getElementById('allTxnsBox');
+  if(!list.length){ box.innerHTML = `<div class="empty-state"><i class="fas fa-receipt"></i>No transactions yet.</div>`; return; }
+  box.innerHTML = list.map(t=>`<div class="txn-row" data-txn="${t.id}"><div style="min-width:0;"><div class="txn-name">${t.type}</div><div class="txn-detail">${t.details||''} · ${new Date(t.timestamp).toLocaleString()}</div></div><div class="txn-right"><div style="text-align:right;"><div class="txn-amount">${naira(t.amount)}</div><span class="txn-status ${t.status}">${t.status}</span></div><button class="txn-view-btn" data-txn-view="${t.id}" title="View receipt"><i class="fas fa-receipt"></i> Receipt</button></div></div>`).join('');
+  box.querySelectorAll('[data-txn-view]').forEach(btn=> btn.addEventListener('click', (e)=>{ e.stopPropagation(); viewTxnReceipt(btn.dataset.txnView); }));
+  box.querySelectorAll('[data-txn]').forEach(row=> row.addEventListener('click', ()=> viewTxnReceipt(row.dataset.txn)));
+}
+
+/* ================= ADMIN ================= */
+let adminTab = 'overview';
+function renderAdminPage(){
+  const totalRevenue = transactions.filter(t=>t.type!=='WALLET Funding' && t.type!=='REFERRAL Bonus').reduce((s,t)=>s+t.amount,0);
+  document.getElementById('pageContent').innerHTML = `
+    <div class="fade-in" style="padding-top:1.8rem;">
+    <h1 style="font-size:1.6rem; margin-bottom:1.2rem;">Admin dashboard</h1>
+    <div class="admin-tabs">${['overview','plans','users','transactions'].map(t=>`<button class="admin-tab ${t===adminTab?'active':''}" data-tab="${t}">${t.charAt(0).toUpperCase()+t.slice(1)}</button>`).join('')}</div>
+    <div id="adminTabContent"></div>
+    </div>
+  `;
+  document.querySelectorAll('.admin-tab').forEach(t=> t.addEventListener('click', ()=>{ adminTab=t.dataset.tab; renderAdminPage(); }));
+  const content = document.getElementById('adminTabContent');
+  if(adminTab==='overview'){
+    content.innerHTML = `<div class="metric-row">
+      <div class="card metric-card"><div class="ic" style="background:var(--signal-soft); color:var(--signal);"><i class="fas fa-users"></i></div><h3>Total users</h3><div class="big">${users.length}</div></div>
+      <div class="card metric-card"><div class="ic" style="background:var(--naira-soft); color:var(--naira);"><i class="fas fa-chart-line"></i></div><h3>Total revenue</h3><div class="big mono">${naira(totalRevenue)}</div></div>
+      <div class="card metric-card"><div class="ic" style="background:var(--amber-soft); color:var(--amber);"><i class="fas fa-arrow-right-arrow-left"></i></div><h3>Transactions</h3><div class="big">${transactions.length}</div></div>
+    </div>
+    <div class="card" style="padding:1.4rem;"><h3 style="font-size:1.02rem; margin-bottom:1rem;">Latest activity</h3><div id="adminLatest"></div></div>`;
+    const latest = transactions.slice().reverse().slice(0,6);
+    document.getElementById('adminLatest').innerHTML = latest.length ? latest.map(t=>`<div class="txn-row"><div><div class="txn-name">${t.type}</div><div class="txn-detail">${t.details||''}</div></div><div style="text-align:right;"><div class="txn-amount">${naira(t.amount)}</div><span class="txn-status ${t.status}">${t.status}</span></div></div>`).join('') : `<div class="empty-state"><i class="fas fa-receipt"></i>No activity yet.</div>`;
+  } else if(adminTab==='plans'){
+    content.innerHTML = `<div class="card" style="padding:1.4rem;">
+      <div class="section-head" style="margin-bottom:0.8rem;"><h3 style="font-size:1.02rem;">Data plans</h3><button class="btn-primary btn-sm" id="addPlanBtn">+ Add plan</button></div>
+      <div class="admin-scroll"><table><thead><tr><th>Network</th><th>Size</th><th>Price</th><th>Validity</th><th></th></tr></thead><tbody id="plansTableBody"></tbody></table></div></div>`;
+    document.getElementById('plansTableBody').innerHTML = dataPlans.map(p=>`<tr><td>${p.network}</td><td>${p.size}</td><td class="mono">${naira(p.price)}</td><td>${p.validity}</td><td><button class="btn-danger btn-sm" data-id="${p.id}">Delete</button></td></tr>`).join('') || `<tr><td colspan="5" style="text-align:center; color:var(--ink-soft);">No plans yet.</td></tr>`;
+    document.querySelectorAll('#plansTableBody [data-id]').forEach(btn=> btn.addEventListener('click', async ()=>{ dataPlans = dataPlans.filter(p=>String(p.id)!==btn.dataset.id); await persistPlans(); toast('Plan deleted.'); renderAdminPage(); }));
+    document.getElementById('addPlanBtn').addEventListener('click', ()=>{
+      openModal(`<h3>Add data plan</h3>
+        <div class="field"><label>Network</label><select id="planNetwork">${NETWORKS.map(n=>`<option>${n}</option>`).join('')}</select></div>
+        <div class="field"><label>Size</label><input id="planSize" placeholder="e.g. 3GB"></div>
+        <div class="field"><label>Price (₦)</label><input id="planPrice" type="number" placeholder="1600"></div>
+        <div class="field"><label>Validity</label><input id="planValidity" placeholder="e.g. 30 days" value="30 days"></div>
+        <button class="btn-primary btn-block" id="planSaveBtn">Add plan</button>`);
+      document.getElementById('planSaveBtn').addEventListener('click', async ()=>{
+        const network = document.getElementById('planNetwork').value;
+        const size = document.getElementById('planSize').value.trim();
+        const price = Math.floor(Number(document.getElementById('planPrice').value));
+        const validity = document.getElementById('planValidity').value.trim() || '30 days';
+        if(!size || !price){ toast('Fill in the plan size and price.','error'); return; }
+        dataPlans.push({ id: Date.now(), network, size, price, validity });
+        await persistPlans(); closeModal(); toast('Plan added.'); renderAdminPage();
+      });
+    });
+  } else if(adminTab==='users'){
+    content.innerHTML = `<div class="card" style="padding:1.4rem;"><h3 style="font-size:1.02rem; margin-bottom:0.8rem;">All users</h3>
+      <div class="admin-scroll"><table><thead><tr><th>Name</th><th>Email</th><th>Wallet</th></tr></thead><tbody>
+      ${users.map(u=>`<tr><td>${u.name}</td><td>${u.email}</td><td class="mono">${naira(u.wallet)}</td></tr>`).join('') || `<tr><td colspan="3" style="text-align:center; color:var(--ink-soft);">No users yet.</td></tr>`}
+      </tbody></table></div></div>`;
+  } else if(adminTab==='transactions'){
+    content.innerHTML = `<div class="card" style="padding:1.4rem;"><h3 style="font-size:1.02rem; margin-bottom:0.8rem;">All transactions</h3>
+      <div class="admin-scroll"><table><thead><tr><th>Type</th><th>Amount</th><th>Status</th><th>Time</th></tr></thead><tbody>
+      ${transactions.slice().reverse().map(t=>`<tr><td>${t.type}</td><td class="mono">${naira(t.amount)}</td><td><span class="txn-status ${t.status}">${t.status}</span></td><td>${new Date(t.timestamp).toLocaleString()}</td></tr>`).join('') || `<tr><td colspan="4" style="text-align:center; color:var(--ink-soft);">No transactions yet.</td></tr>`}
+      </tbody></table></div></div>`;
+  }
+}
+
+/* ================= INIT ================= */
+(async function init(){
+  document.getElementById('pageContent').innerHTML = `<div class="boot-loader"><div class="boot-mark"><i class="fas fa-bolt"></i></div>Loading Recharge9ja…</div>`;
+  await loadAllData();
+  renderPage();
+})();

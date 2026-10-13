@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Medicine Reminder Pro</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    background:#eef3f9;
+    padding:20px;
+}
+
+h1{
+    text-align:center;
+    color:#2c3e50;
+}
+
+.container{
+    max-width:750px;
+    margin:auto;
+    background:white;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 5px 15px rgba(0,0,0,0.1);
+}
+
+input, select{
+    padding:10px;
+    margin:5px 0;
+    width:100%;
+}
+
+button{
+    padding:8px 12px;
+    margin:5px 3px;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+.add-btn{ background:#27ae60; color:white;}
+.edit-btn{ background:#f39c12; color:white;}
+.delete-btn{ background:#e74c3c; color:white;}
+.take-btn{ background:#3498db; color:white;}
+.add-time-btn{ background:#8e44ad; color:white;}
+
+.medicine-card{
+    background:#f7f9fc;
+    padding:15px;
+    margin:10px 0;
+    border-radius:10px;
+    border-left:5px solid #3498db;
+}
+
+.time-badge{
+    background:#3498db;
+    color:white;
+    padding:4px 8px;
+    border-radius:5px;
+    margin:3px;
+    display:inline-block;
+}
+
+textarea{
+    width:100%;
+    padding:10px;
+    resize:none;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Medicine Reminder Pro</h1>
+
+<div class="container">
+
+<input type="text" id="medName" placeholder="Medicine Name">
+
+<div id="timeContainer"></div>
+<button type="button" class="add-time-btn" onclick="addTimeField()">+ Add Time</button>
+
+<select id="frequency">
+<option value="daily">Daily</option>
+<option value="alternate">Alternate Days</option>
+</select>
+
+<textarea id="medNote" placeholder="Optional Note (e.g Take after food)"></textarea>
+
+<button type="button" class="add-btn" onclick="addOrUpdateMedicine()">Save Medicine</button>
+
+<hr>
+
+<div id="medicineList"></div>
+
+</div>
+
+<audio id="alarmSound" loop>
+<source src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg">
+</audio>
+
+<script>
+let medicines = [];
+let editIndex = null;
+console.log("Loaded:", medicines);
+function saveMedicines(){
+    try{
+        localStorage.setItem("medicines", JSON.stringify(medicines));
+        console.log("Saved successfully");
+    }catch(e){
+        alert("Storage error: " + e);
+    }
+}
+
+function addTimeField(value=""){
+const container = document.getElementById("timeContainer");
+const input = document.createElement("input");
+input.type="time";
+input.value=value;
+container.appendChild(input);
+}
+
+function clearTimeFields(){
+document.getElementById("timeContainer").innerHTML="";
+}
+
+function addOrUpdateMedicine(){
+const name = document.getElementById("medName").value.trim();
+const frequency = document.getElementById("frequency").value;
+const note = document.getElementById("medNote").value.trim();
+
+const timeInputs = document.querySelectorAll("#timeContainer input");
+const times = [];
+
+timeInputs.forEach(input=>{
+if(input.value) times.push(input.value);
+});
+
+if(!name || times.length===0){
+alert("Enter medicine name and at least one time");
+return;
+}
+
+const medData = {name,times,frequency,note};
+
+if(editIndex === null){
+medicines.push(medData);
+} else {
+medicines[editIndex] = medData;
+editIndex = null;
+}
+
+saveMedicines();
+renderMedicines();
+clearForm();
+}
+
+function editMedicine(index){
+const med = medicines[index];
+
+document.getElementById("medName").value = med.name;
+document.getElementById("frequency").value = med.frequency;
+document.getElementById("medNote").value = med.note || "";
+
+clearTimeFields();
+med.times.forEach(t=> addTimeField(t));
+
+editIndex = index;
+}
+
+function deleteMedicine(index){
+if(confirm("Delete this medicine?")){
+medicines.splice(index,1);
+saveMedicines();
+renderMedicines();
+}
+}
+
+function markTaken(){
+alert("Marked as Taken ✅");
+document.getElementById("alarmSound").pause();
+}
+
+function clearForm(){
+document.getElementById("medName").value="";
+document.getElementById("medNote").value="";
+document.getElementById("frequency").value="daily";
+clearTimeFields();
+addTimeField();
+}
+
+function renderMedicines(){
+    const list = document.getElementById("medicineList");
+    list.innerHTML="";
+
+    medicines.forEach((med,index)=>{
+        let timesHTML="";
+        med.times.forEach(t=>{
+            timesHTML += `<span class="time-badge">${t}</span>`;
+        });
+
+        const card = document.createElement("div");
+        card.className="medicine-card";
+        card.innerHTML = `
+            <h3>${med.name}</h3>
+            <p>${timesHTML}</p>
+            <p><b>Frequency:</b> ${med.frequency}</p>
+            ${med.note ? `<p><b>Note:</b> ${med.note}</p>` : ""}
+            <p><b>Next Dose:</b> <span id="nextDose-${index}">Calculating...</span></p>
+            <p><b>Countdown:</b> <span id="countdown-${index}">--:--:--</span></p>
+            <button class="take-btn" onclick="markTaken()">Mark as Taken</button>
+            <button class="edit-btn" onclick="editMedicine(${index})">Edit</button>
+            <button class="delete-btn" onclick="deleteMedicine(${index})">Delete</button>
+        `;
+        list.appendChild(card);
+    });
+}
+
+addTimeField();
+renderMedicines();
+
+function checkReminder(){
+    const now = new Date();
+    const currentTime = now.toTimeString().slice(0,5);
+    const todayDate = now.getDate();
+
+    medicines.forEach(med=>{
+        if(med.frequency==="alternate" && todayDate%2!==0){
+            return;
+        }
+
+        med.times.forEach(t=>{
+            if(t===currentTime){
+                triggerAlarm(med.name, med.note);
+            }
+        });
+    });
+}
+
+function triggerAlarm(name,note){
+    if(Notification.permission==="granted"){
+        new Notification("Medicine Time!", {
+            body: note ? name + " - " + note : name
+        });
+    }
+
+    const sound = document.getElementById("alarmSound");
+    sound.currentTime = 0;
+    sound.play().catch(()=>{
+        console.log("User interaction required for sound.");
+    });
+}
+
+function updateCountdowns(){
+    const now = new Date();
+
+    medicines.forEach((med,index)=>{
+        let nextDose = null;
+
+        med.times.forEach(time=>{
+            const [hours, minutes] = time.split(":");
+            let doseTime = new Date();
+            doseTime.setHours(hours, minutes, 0, 0);
+
+            if(doseTime < now){
+                doseTime.setDate(doseTime.getDate() + 1);
+            }
+
+            if(!nextDose || doseTime < nextDose){
+                nextDose = doseTime;
+            }
+        });
+
+        if(nextDose){
+            const diff = nextDose - now;
+
+            const days = Math.floor(diff / (1000*60*60*24));
+            const hours = Math.floor((diff / (1000*60*60)) % 24);
+            const minutes = Math.floor((diff / (1000*60)) % 60);
+            const seconds = Math.floor((diff / 1000) % 60);
+
+            const nextDoseEl = document.getElementById(`nextDose-${index}`);
+            const countdownEl = document.getElementById(`countdown-${index}`);
+
+            if(nextDoseEl){
+                nextDoseEl.textContent = nextDose.toLocaleString();
+            }
+
+            if(countdownEl){
+                countdownEl.textContent = 
+                    `${days}d ${hours}h ${minutes}m ${seconds}s`;
+            }
+        }
+    });
+}
+
+if("Notification" in window){
+    if(Notification.permission!=="granted"){
+        Notification.requestPermission();
+    }
+}
+
+setInterval(checkReminder,1000);
+setInterval(updateCountdowns,1000);
+</script>
+
+</body>
+</html>

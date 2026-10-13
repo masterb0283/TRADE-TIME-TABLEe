@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Manage codes</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0f2a3d;--teal:#1f8a8a;--teal-d:#166b6b;--line:#d9e1e8;--muted:#5d6f7d;--danger:#b3261e;--paper:#f6f8fa}
+*{box-sizing:border-box;margin:0}
+body{font-family:'Manrope',system-ui,Arial,sans-serif;background:var(--paper);color:#13232f;padding:32px 20px}
+.wrap{max-width:980px;margin:auto}
+h1{font-size:1.6rem;font-weight:800}.sub{color:var(--muted);margin:6px 0 24px}
+.box{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:20px}
+form{display:flex;gap:10px;flex-wrap:wrap}
+input{height:44px;padding:0 12px;border:1.5px solid var(--line);border-radius:9px;font:inherit;flex:1;min-width:180px}
+input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(31,138,138,.18)}
+button{font:inherit;font-weight:600;border-radius:8px;border:1.5px solid var(--line);background:#fff;padding:7px 12px;cursor:pointer}
+button:hover{background:var(--paper)}
+.primary{background:var(--teal);color:#fff;border-color:var(--teal);height:44px;padding:0 20px}.primary:hover{background:var(--teal-d)}
+.danger{color:var(--danger)}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:960px}
+th,td{text-align:left;padding:12px 10px;border-bottom:1px solid var(--line);font-size:.92rem;vertical-align:middle}
+th{color:var(--muted);font-weight:600}
+td.code{font-weight:700;letter-spacing:.05em;font-family:ui-monospace,Consolas,monospace}
+.pill{display:inline-block;padding:3px 10px;border-radius:99px;font-size:.8rem;font-weight:600}
+.on{background:#e3f4ea;color:#176b3a}.off{background:#fdecea;color:var(--danger)}.dev{background:#e8eef3;color:var(--ink)}
+.ip{font-weight:700;margin-top:6px}.meta{color:var(--muted);font-size:.8rem}.warn{color:var(--danger);font-size:.8rem;margin-top:6px;font-weight:600}
+.acts{display:flex;gap:6px;flex-wrap:wrap}
+#msg{margin-bottom:14px;font-weight:600;min-height:1.2em}
+</style></head><body><div class="wrap">
+<h1>Manage authorization codes</h1>
+<p class="sub">Each code works for one person on one device. Reset a device if they switch browsers or phones.</p>
+<div class="box"><form id="add">
+  <input id="name" placeholder="Person's name (optional)">
+  <input id="newcode" placeholder="Custom code (leave empty to generate)">
+  <button class="primary" type="submit">Add code</button>
+</form></div>
+<div id="msg" role="status"></div>
+<div class="box scroll"><table><thead><tr><th>Name</th><th>Code</th><th>Status</th><th>Used from</th><th>Last login</th><th>Actions</th></tr></thead><tbody id="rows"></tbody></table></div>
+</div>
+<script>
+const api=(m,u,b)=>fetch(u,{method:m,headers:{'Content-Type':'application/json'},body:b?JSON.stringify(b):undefined}).then(async r=>{const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Request failed');return d});
+const msg=t=>{const m=document.getElementById('msg');m.textContent=t;clearTimeout(msg.t);msg.t=setTimeout(()=>m.textContent='',4000)};
+const el=(t,txt,cls)=>{const e=document.createElement(t);if(txt!=null)e.textContent=txt;if(cls)e.className=cls;return e};
+const enc=c=>encodeURIComponent(c);
+async function run(fn,ok){try{await fn();if(ok)msg(ok);load()}catch(e){msg(e.message)}}
+async function load(){
+  const list=await api('GET','/api/admin/codes'),tb=document.getElementById('rows');tb.innerHTML='';
+  if(!list.length){const tr=el('tr'),td=el('td','No codes yet. Add one above.');td.colSpan=6;tr.append(td);tb.append(tr);return}
+  list.forEach(r=>{
+    const tr=el('tr');
+    tr.append(el('td',r.name||'-'),el('td',r.code,'code'));
+    const s=el('td');s.append(el('span',r.active?'Active':'Disabled','pill '+(r.active?'on':'off')));tr.append(s);
+    const d=el('td');
+    if(r.deviceBound){d.append(el('span','Locked to a device','pill dev'));d.append(el('div','IP: '+(r.lastIp||'-'),'ip'));d.append(el('div',(r.device||'')+(r.loginCount?' \u00b7 '+r.loginCount+' sign-ins':''),'meta'))}
+    else d.append(el('span','Not used yet','pill dev'));
+    if(r.lastBlocked)d.append(el('div','Blocked attempt from '+r.lastBlocked.ip+' ('+r.lastBlocked.device+') on '+new Date(r.lastBlocked.at).toLocaleString(),'warn'));
+    tr.append(d);
+    tr.append(el('td',r.lastLogin?new Date(r.lastLogin).toLocaleString():'-'));
+    const a=el('td'),w=el('div',null,'acts');
+    const b=(t,fn,c)=>{const x=el('button',t,c);x.onclick=fn;w.append(x)};
+    b('Copy',()=>navigator.clipboard.writeText(r.code).then(()=>msg('Code copied')));
+    b('Change code',()=>{const n=prompt('New code for '+(r.name||r.code)+' (leave empty to generate):');if(n===null)return;
+      run(async()=>{const code=n.trim()||Array.from(crypto.getRandomValues(new Uint8Array(6)),x=>x.toString(16).padStart(2,'0')).join('').toUpperCase().replace(/(.{6})/,'$1-');
+        await api('PATCH','/api/admin/codes/'+enc(r.code),{newCode:code});msg('Code changed to '+code)})});
+    b('Reset device',()=>confirm('Let this code be used on a new device?')&&run(()=>api('PATCH','/api/admin/codes/'+enc(r.code),{resetDevice:true}),'Device reset'));
+    b(r.active?'Disable':'Enable',()=>run(()=>api('PATCH','/api/admin/codes/'+enc(r.code),{active:!r.active}),r.active?'Code disabled':'Code enabled'));
+    b('Delete',()=>confirm('Delete this code permanently?')&&run(()=>api('DELETE','/api/admin/codes/'+enc(r.code)),'Code deleted'),'danger');
+    a.append(w);tr.append(a);tb.append(tr);
+  });
+}
+document.getElementById('add').onsubmit=e=>{e.preventDefault();
+  run(async()=>{const r=await api('POST','/api/admin/codes',{name:name.value,code:newcode.value});name.value=newcode.value='';msg('Code added: '+r.code)})};
+load().catch(e=>msg(e.message));
+</script></body></html>
